@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -13,10 +13,12 @@
     <PackageTags>Relational database, dynamic queries</PackageTags>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
     <Copyright>Hussein Al Bayati</Copyright>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Com.H.Data" Version="1.0.3" />
+    <PackageReference Include="Com.H.Data" Version="1.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.1" />
   </ItemGroup>
 
