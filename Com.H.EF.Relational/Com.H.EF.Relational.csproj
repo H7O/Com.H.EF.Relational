@@ -18,8 +18,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Com.H.Data" Version="1.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Com.H">
+      <HintPath>..\..\Com.H\Com.H\bin\Release\net5.0\Com.H.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
