@@ -17,6 +17,13 @@ using Com.H.Data;
 namespace Com.H.Data.EF.Relational
 {
 
+    public class QueryParams
+    {
+        public object DataModel { get; set; }
+        public string OpenMarker { get; set; } = "{{";
+        public string CloseMarker { get; set; } = "}}";
+        public string NullReplacement { get; set; } = "null";
+    }
     public static class QueryExtensions
     {
         // private static string PRegex { get; set; } = @"{{(?<param>.*?)?}}";
@@ -52,6 +59,7 @@ namespace Com.H.Data.EF.Relational
             IDictionary<string, object> queryParams = null,
             string openMarker = "{{",
             string closeMarker = "}}",
+            string nullReplacement = "null",
             bool closeConnectionOnExit = false
             )
         {
@@ -86,7 +94,7 @@ namespace Com.H.Data.EF.Relational
                     {
                         if (item.v == null) query = query
                             .Replace(openMarker + item.k + closeMarker,
-                                "null", true,
+                                nullReplacement, true,
                                 CultureInfo.InstalledUICulture);
                         else
                         {
@@ -163,57 +171,13 @@ namespace Com.H.Data.EF.Relational
             yield break;
         }
 
-
-        /// <summary>
-        /// Takes parameters in the form of either IDictionary of a string and object key value pairs,
-        /// or in the form of any object with properties, where the object properties serve as parameters
-        /// to be passed to the query.
-        /// The query string could have parameters placeholders in the form of property names enclosed with 
-        /// double curley brackets {{property_name}}, so that the extension method could use those placeholders
-        /// convert them to query parameters for security and pass them to the relational database for execution.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="dc"></param>
-        /// <param name="query"></param>
-        /// <param name="queryParams"></param>
-        /// <param name="closeConnectionOnExit"></param>
-        /// <returns></returns>
-        public static IEnumerable<T> ExecuteQuery<T>(
-            this DbContext dc,
-            string query,
-            object queryParams = null,
-            string openMarker = "{{",
-            string closeMarker = "}}",
-            bool closeConnectionOnExit = false
-            )
-        {
-            if (dc == null) throw new ArgumentNullException(nameof(dc));
-            if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
-
-
-
-            if (queryParams == null)
-                return dc.ExecuteQueryDictionary<T>(query, new Dictionary<string, object>(), openMarker, closeMarker, closeConnectionOnExit);
-
-
-            IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
-                //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
-                //?
-                //((IDictionary<string, object>)queryParams)
-                //:
-                //queryParams.GetType().GetProperties()
-                //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
-
-            return dc.ExecuteQueryDictionary<T>(query, dictionaryParams, openMarker, closeMarker, closeConnectionOnExit);
-        }
-
-
         private static IEnumerable<dynamic> ExecuteQueryDictionary(
             this DbContext dc,
             string query,
             IDictionary<string, object> queryParams = null,
             string openMarker = "{{",
             string closeMarker = "}}",
+            string nullReplacement = "null",
             bool closeConnectionOnExit = false
             )
         {
@@ -245,7 +209,7 @@ namespace Com.H.Data.EF.Relational
                     {
                         if (item.v == null) query = query
                             .Replace(openMarker + item.k + closeMarker,
-                                "null", true,
+                                nullReplacement, true,
                                 CultureInfo.InstalledUICulture);
                         else
                             query = query
@@ -316,6 +280,53 @@ namespace Com.H.Data.EF.Relational
 
 
         /// <summary>
+        /// Takes parameters in the form of either IDictionary of a string and object key value pairs,
+        /// or in the form of any object with properties, where the object properties serve as parameters
+        /// to be passed to the query.
+        /// The query string could have parameters placeholders in the form of property names enclosed with 
+        /// double curley brackets {{property_name}}, so that the extension method could use those placeholders
+        /// convert them to query parameters for security and pass them to the relational database for execution.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="dc"></param>
+        /// <param name="query"></param>
+        /// <param name="queryParams"></param>
+        /// <param name="closeConnectionOnExit"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> ExecuteQuery<T>(
+            this DbContext dc,
+            string query,
+            object queryParams = null,
+            string openMarker = "{{",
+            string closeMarker = "}}",
+            string nullReplacement = "null",
+            bool closeConnectionOnExit = false
+            )
+        {
+            if (dc == null) throw new ArgumentNullException(nameof(dc));
+            if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
+
+
+
+            if (queryParams == null)
+                return dc.ExecuteQueryDictionary<T>(query, new Dictionary<string, object>(), openMarker, closeMarker, nullReplacement, closeConnectionOnExit);
+
+
+            IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
+            //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
+            //?
+            //((IDictionary<string, object>)queryParams)
+            //:
+            //queryParams.GetType().GetProperties()
+            //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
+
+            return dc.ExecuteQueryDictionary<T>(query, dictionaryParams, openMarker, closeMarker, nullReplacement, closeConnectionOnExit);
+        }
+
+
+
+
+        /// <summary>
         /// Dynamic results version of ExecuteQuery extension. Takes parameters in the form of either IDictionary of a string and object key value pairs,
         /// or in the form of any object with properties, where the object properties serve as parameters
         /// to be passed to the query.
@@ -335,6 +346,7 @@ namespace Com.H.Data.EF.Relational
             object queryParams = null,
             string openMarker = "{{",
             string closeMarker = "}}",
+            string nullReplacement = "null",
             bool closeConnectionOnExit = false
             )
         {
@@ -344,19 +356,19 @@ namespace Com.H.Data.EF.Relational
 
 
             if (queryParams == null)
-                return dc.ExecuteQueryDictionary(query, new Dictionary<string, object>(), 
-                    openMarker, closeMarker,closeConnectionOnExit);
+                return dc.ExecuteQueryDictionary(query, new Dictionary<string, object>(),
+                    openMarker, closeMarker, nullReplacement, closeConnectionOnExit);
 
             IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
-                //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
-                //?
-                //((IDictionary<string, object>)queryParams)
-                //:
-                //queryParams.GetType().GetProperties()
-                //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
+            //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
+            //?
+            //((IDictionary<string, object>)queryParams)
+            //:
+            //queryParams.GetType().GetProperties()
+            //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
 
-            return dc.ExecuteQueryDictionary(query, dictionaryParams, openMarker, 
-                closeMarker, closeConnectionOnExit);
+            return dc.ExecuteQueryDictionary(query, dictionaryParams, openMarker,
+                closeMarker, nullReplacement, closeConnectionOnExit);
 
         }
 
@@ -392,6 +404,7 @@ namespace Com.H.Data.EF.Relational
             CancellationToken? cancellationToken = null,
             string openMarker = "{{",
             string closeMarker = "}}",
+            string nullReplacement = "null",
             bool closeConnectionOnExit = false
             )
         {
@@ -426,7 +439,7 @@ namespace Com.H.Data.EF.Relational
                     {
                         if (item.v == null) query = query
                             .Replace(openMarker + item.k + closeMarker,
-                                "null", true,
+                                nullReplacement, true,
                                 CultureInfo.InstalledUICulture);
                         else
                         {
@@ -483,7 +496,7 @@ namespace Com.H.Data.EF.Relational
                             dst => dst.Name.ToUpper(CultureInfo.InvariantCulture),
                             // see if schema name was applied
                             src => src.Name.ToUpper(CultureInfo.InvariantCulture),
-                            (dst, src) => new { dst , src })
+                            (dst, src) => new { dst, src })
                             ;
 
                     foreach (var item in joined.Where(x => x.src != null && x.src.Value != null))
@@ -515,6 +528,7 @@ namespace Com.H.Data.EF.Relational
             CancellationToken? cancellationToken = null,
             string openMarker = "{{",
             string closeMarker = "}}",
+            string nullReplacement = "null",
             bool closeConnectionOnExit = false
             )
         {
@@ -527,18 +541,18 @@ namespace Com.H.Data.EF.Relational
                 await foreach (var item in dc.ExecuteQueryDictionaryAsync<T>(
                         query,
                         new Dictionary<string, object>(),
-                        cancellationToken, openMarker, 
-                        closeMarker, closeConnectionOnExit))
+                        cancellationToken, openMarker,
+                        closeMarker, nullReplacement, closeConnectionOnExit))
                     yield return item;
 
 
             IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
-                //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
-                //?
-                //((IDictionary<string, object>)queryParams)
-                //:
-                //queryParams.GetType().GetProperties()
-                //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
+            //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
+            //?
+            //((IDictionary<string, object>)queryParams)
+            //:
+            //queryParams.GetType().GetProperties()
+            //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
 
             await foreach (var item in dc.ExecuteQueryDictionaryAsync<T>(
                 query,
@@ -546,6 +560,7 @@ namespace Com.H.Data.EF.Relational
                 cancellationToken,
                 openMarker,
                 closeMarker,
+                nullReplacement,
                 closeConnectionOnExit))
                 yield return item;
         }
@@ -562,6 +577,7 @@ namespace Com.H.Data.EF.Relational
             CancellationToken? cancellationToken = null,
             string openMarker = "{{",
             string closeMarker = "}}",
+            string nullReplacement = "null",
             bool closeConnectionOnExit = false
             )
         {
@@ -593,7 +609,7 @@ namespace Com.H.Data.EF.Relational
                     {
                         if (item.v == null) query = query
                             .Replace(openMarker + item.k + closeMarker,
-                                "null", true,
+                                nullReplacement, true,
                                 CultureInfo.InstalledUICulture);
                         else
                             query = query
@@ -672,6 +688,7 @@ namespace Com.H.Data.EF.Relational
             CancellationToken? cancellationToken = null,
             string openMarker = "{{",
             string closeMarker = "}}",
+            string nullReplacement = "null",
             bool closeConnectionOnExit = false
             )
         {
@@ -687,16 +704,17 @@ namespace Com.H.Data.EF.Relational
                     cancellationToken,
                     openMarker,
                     closeMarker,
+                    nullReplacement,
                     closeConnectionOnExit))
                     yield return item;
 
             IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
-                //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
-                //?
-                //((IDictionary<string, object>)queryParams)
-                //:
-                //queryParams.GetType().GetProperties()
-                //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
+            //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
+            //?
+            //((IDictionary<string, object>)queryParams)
+            //:
+            //queryParams.GetType().GetProperties()
+            //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
 
             await foreach (var item in dc.ExecuteQueryDictionaryAsync(
                 query,
@@ -704,6 +722,7 @@ namespace Com.H.Data.EF.Relational
                 cancellationToken,
                 openMarker,
                 closeMarker,
+                nullReplacement,
                 closeConnectionOnExit))
                 yield return item;
 
@@ -861,7 +880,7 @@ namespace Com.H.Data.EF.Relational
                 ||
                 string.IsNullOrWhiteSpace(whereClause)
                 ) return null;
-            return GenerateUpdateCmd(fields.Keys.ToList(), 
+            return GenerateUpdateCmd(fields.Keys.ToList(),
                 tableName, whereClause, ignoreProperties, openMarker, closeMarker);
         }
 
@@ -880,7 +899,7 @@ namespace Com.H.Data.EF.Relational
             var queryParams = obj.GetDataModelParameters();
             if (queryParams == null) return null;
             return queryParams.Keys.ToList()
-                .GenerateUpdateCmd<List<string>>(tableName, 
+                .GenerateUpdateCmd<List<string>>(tableName,
                 whereClause, ignoreProperties, openMarker, closeMarker);
         }
 
@@ -897,7 +916,7 @@ namespace Com.H.Data.EF.Relational
             var fields = obj.GetDataModelParameters();
             if (fields == null || fields.Keys.Count < 1) return (null, null);
             return (
-                fields.Keys.ToList().GenerateUpdateCmd(tableName, 
+                fields.Keys.ToList().GenerateUpdateCmd(tableName,
                 whereClause, ignoreProperties, openMarker, closeMarker),
                 fields);
         }
@@ -916,6 +935,149 @@ namespace Com.H.Data.EF.Relational
                 fields.Keys.ToList().GenerateInsertCmd(tableName, openMarker, closeMarker),
                 fields);
         }
+
+        #endregion
+
+
+        #region execute query IEnumerable of Dictionaries
+
+        /// <summary>
+        /// Don't use, not tested yet.
+        /// </summary>
+        /// <param name="dc"></param>
+        /// <param name="query"></param>
+        /// <param name="queryParams"></param>
+        /// <param name="closeConnectionOnExit"></param>
+        /// <returns></returns>
+        private static IEnumerable<dynamic> ExecuteQuery(
+            this DbContext dc,
+            string query,
+            IEnumerable<QueryParams> queryParams = null,
+            bool closeConnectionOnExit = false
+            )
+        {
+            if (dc == null) throw new ArgumentNullException(nameof(dc));
+            queryParams ??= new List<QueryParams>() { new QueryParams() };
+            if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
+            var conn = dc.Database.GetDbConnection();
+            bool cont = true;
+            DbDataReader reader = null;
+            try
+            {
+                conn.EnsureOpen();
+
+                var paramListIntersected = queryParams
+                    .SelectMany(x =>
+                        Regex.Matches(query, x.OpenMarker + PRegex + x.CloseMarker)
+                            .Cast<Match>()
+                            .Select(x => x.Groups["param"].Value)
+                            .Where(x => !string.IsNullOrWhiteSpace(x))
+                            .Distinct()
+                            .Select(varName => new
+                            {
+                                VarName = varName,
+                                OpenMarker = x.OpenMarker,
+                                CloseMarker = x.CloseMarker,
+                                NullReplacement = x.NullReplacement
+                            })).ToList();
+
+                var command = conn.CreateCommand();
+
+                if (paramListIntersected.Count > 0)
+                {
+
+                    var pValues = queryParams.SelectMany(x => x.DataModel.GetDataModelParameters())
+                        .Cast<KeyValuePair<string, object>>();
+
+                    Dictionary<string, int> varNameCount = new Dictionary<string, int>();
+
+                    var joined = paramListIntersected
+                        .LeftJoin(pValues,
+                        pInter => pInter.VarName.ToUpper(CultureInfo.InvariantCulture),
+                        pV => pV.Key.ToUpper(CultureInfo.InvariantCulture),
+                        (pInter, pV) => {
+                            return
+                            new
+                            {
+                                VarName = pInter.VarName,
+                                DbParamName = 
+                                $"@vxv_{(varNameCount.ContainsKey(pInter.VarName) ? ++varNameCount[pInter.VarName]:varNameCount[pInter.VarName] = 1) }_{pInter.VarName}"
+                                ,
+                                Value = pV.Value,
+                                OpenMarker = pInter.OpenMarker,
+                                CloseMarker = pInter.CloseMarker,
+                                NullReplacement = pInter.NullReplacement
+                            };
+                            }
+                            ).ToList();
+                    
+                    foreach (var item in joined)
+                    {
+                        if (item.Value == null) query = query
+                            .Replace(item.OpenMarker + item.VarName + item.CloseMarker,
+                                item.NullReplacement, true,
+                                CultureInfo.InstalledUICulture);
+                        else
+                        {
+                            query = query
+                            .Replace(item.OpenMarker + item.VarName + item.CloseMarker,
+                            item.DbParamName, true,
+                                CultureInfo.InvariantCulture);
+                        }
+                        var p = command.CreateParameter();
+                        p.ParameterName = item.DbParamName;
+                        p.Value = item.Value;
+                        command.Parameters.Add(p);
+                    }
+                }
+                
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+
+                reader = command.ExecuteReader();
+            }
+            catch
+            {
+                reader.EnsureClosed();
+                if (closeConnectionOnExit) conn.EnsureClosed();
+                throw;
+            }
+
+            if (reader.HasRows)
+            {
+                while (cont)
+                {
+                    try
+                    {
+                        cont = reader.Read();
+                        if (!cont) break;
+                    }
+                    catch
+                    {
+                        reader.EnsureClosed();
+                        if (closeConnectionOnExit) conn.EnsureClosed();
+                        throw;
+                    }
+                    ExpandoObject result = new ExpandoObject();
+
+                    foreach (var item in Enumerable.Range(0, reader.FieldCount)
+                            .Select(x => new { Name = reader.GetName(x), Value = reader.GetValue(x) }))
+                    {
+                        try
+                        {
+                            result.TryAdd(item.Name, item.Value);
+                        }
+                        catch { }
+                    }
+
+                    yield return result;
+                }
+            }
+            reader.EnsureClosed();
+            if (closeConnectionOnExit) conn.EnsureClosed();
+            yield break;
+        }
+
 
         #endregion
 
