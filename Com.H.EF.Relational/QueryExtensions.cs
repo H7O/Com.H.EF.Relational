@@ -350,7 +350,6 @@ namespace Com.H.Data.EF.Relational
             bool closeConnectionOnExit = false
             )
         {
-            Console.WriteLine("2");
             if (dc == null) throw new ArgumentNullException(nameof(dc));
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
 
@@ -949,16 +948,6 @@ namespace Com.H.Data.EF.Relational
         }
 
         #endregion
-
-
-
-        public static void Debug()
-        {
-            Console.WriteLine("debug");
-        }
-
-
-        
 
 
         #region execute query IEnumerable of QueryParams
