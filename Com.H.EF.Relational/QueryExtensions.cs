@@ -353,7 +353,6 @@ namespace Com.H.Data.EF.Relational
             if (dc == null) throw new ArgumentNullException(nameof(dc));
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
 
-            
 
             if (queryParams == null)
                 return dc.ExecuteQueryDictionary(query, new Dictionary<string, object>(),
