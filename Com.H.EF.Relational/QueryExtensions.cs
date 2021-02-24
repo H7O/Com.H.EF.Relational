@@ -350,14 +350,26 @@ namespace Com.H.Data.EF.Relational
             bool closeConnectionOnExit = false
             )
         {
+            Console.WriteLine("2");
             if (dc == null) throw new ArgumentNullException(nameof(dc));
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
 
-
+            
 
             if (queryParams == null)
                 return dc.ExecuteQueryDictionary(query, new Dictionary<string, object>(),
                     openMarker, closeMarker, nullReplacement, closeConnectionOnExit);
+            else
+            {
+                if (typeof(IEnumerable<QueryParams>).IsAssignableFrom(queryParams.GetType()))
+                return ExecuteQuery(
+                    dc,
+                    query,
+                    (IEnumerable<QueryParams>) queryParams,
+                    closeConnectionOnExit);
+
+
+            }
 
             IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
             //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
@@ -939,7 +951,17 @@ namespace Com.H.Data.EF.Relational
         #endregion
 
 
-        #region execute query IEnumerable of Dictionaries
+
+        public static void Debug()
+        {
+            Console.WriteLine("debug");
+        }
+
+
+        
+
+
+        #region execute query IEnumerable of QueryParams
 
         /// <summary>
         /// Don't use, not tested yet.
@@ -949,10 +971,23 @@ namespace Com.H.Data.EF.Relational
         /// <param name="queryParams"></param>
         /// <param name="closeConnectionOnExit"></param>
         /// <returns></returns>
-        private static IEnumerable<dynamic> ExecuteQuery(
+        public static IEnumerable<dynamic> ExecuteQuery(
             this DbContext dc,
             string query,
-            IEnumerable<QueryParams> queryParams = null,
+            IEnumerable<QueryParams> queryParams,
+            bool closeConnectionOnExit = false
+            )
+        {
+            if (queryParams == null) return ExecuteQuery(dc, query);
+            return ExecuteQueryNested(dc, query, queryParams, closeConnectionOnExit);
+        }
+
+
+
+        private static IEnumerable<dynamic> ExecuteQueryNested(
+            this DbContext dc,
+            string query,
+            IEnumerable<QueryParams> queryParams,
             bool closeConnectionOnExit = false
             )
         {
@@ -965,10 +1000,13 @@ namespace Com.H.Data.EF.Relational
             try
             {
                 conn.EnsureOpen();
+                Dictionary<string, int> varNameCount = new Dictionary<string, int>();
 
                 var paramListIntersected = queryParams
                     .SelectMany(x =>
-                        Regex.Matches(query, x.OpenMarker + PRegex + x.CloseMarker)
+                    {
+                        var dicParams = x.DataModel?.GetDataModelParameters();
+                        return Regex.Matches(query, x.OpenMarker + PRegex + x.CloseMarker)
                             .Cast<Match>()
                             .Select(x => x.Groups["param"].Value)
                             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -976,42 +1014,22 @@ namespace Com.H.Data.EF.Relational
                             .Select(varName => new
                             {
                                 VarName = varName,
+                                DbParamName =
+                                $"@vxv_{(varNameCount.ContainsKey(varName) ? ++varNameCount[varName] : varNameCount[varName] = 1) }_{varName}"
+                                ,
                                 OpenMarker = x.OpenMarker,
                                 CloseMarker = x.CloseMarker,
-                                NullReplacement = x.NullReplacement
-                            })).ToList();
+                                NullReplacement = x.NullReplacement,
+                                Value = dicParams?.ContainsKey(varName) == true ? dicParams[varName] : null
+                            });
+                    }
+                            ).ToList();
 
                 var command = conn.CreateCommand();
 
                 if (paramListIntersected.Count > 0)
                 {
-
-                    var pValues = queryParams.SelectMany(x => x.DataModel.GetDataModelParameters())
-                        .Cast<KeyValuePair<string, object>>();
-
-                    Dictionary<string, int> varNameCount = new Dictionary<string, int>();
-
-                    var joined = paramListIntersected
-                        .LeftJoin(pValues,
-                        pInter => pInter.VarName.ToUpper(CultureInfo.InvariantCulture),
-                        pV => pV.Key.ToUpper(CultureInfo.InvariantCulture),
-                        (pInter, pV) => {
-                            return
-                            new
-                            {
-                                VarName = pInter.VarName,
-                                DbParamName = 
-                                $"@vxv_{(varNameCount.ContainsKey(pInter.VarName) ? ++varNameCount[pInter.VarName]:varNameCount[pInter.VarName] = 1) }_{pInter.VarName}"
-                                ,
-                                Value = pV.Value,
-                                OpenMarker = pInter.OpenMarker,
-                                CloseMarker = pInter.CloseMarker,
-                                NullReplacement = pInter.NullReplacement
-                            };
-                            }
-                            ).ToList();
-                    
-                    foreach (var item in joined)
+                    foreach (var item in paramListIntersected)
                     {
                         if (item.Value == null) query = query
                             .Replace(item.OpenMarker + item.VarName + item.CloseMarker,
@@ -1030,7 +1048,7 @@ namespace Com.H.Data.EF.Relational
                         command.Parameters.Add(p);
                     }
                 }
-                
+
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
 
@@ -1077,6 +1095,8 @@ namespace Com.H.Data.EF.Relational
             if (closeConnectionOnExit) conn.EnsureClosed();
             yield break;
         }
+
+
 
 
         #endregion
