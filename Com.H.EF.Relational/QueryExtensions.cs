@@ -17,17 +17,11 @@ using Com.H.Data;
 namespace Com.H.Data.EF.Relational
 {
 
-    public class QueryParams
-    {
-        public object DataModel { get; set; }
-        public string OpenMarker { get; set; } = "{{";
-        public string CloseMarker { get; set; } = "}}";
-        public string NullReplacement { get; set; } = "null";
-    }
+
     public static class QueryExtensions
     {
         // private static string PRegex { get; set; } = @"{{(?<param>.*?)?}}";
-        private static string PRegex { get; set; } = @"(?<param>.*?)?";
+        
 
         #region synchronous
 
@@ -72,7 +66,7 @@ namespace Com.H.Data.EF.Relational
             {
                 conn.EnsureOpen();
 
-                var paramList = Regex.Matches(query, openMarker + PRegex + closeMarker)
+                var paramList = Regex.Matches(query, openMarker + QueryParams.RegexPattern + closeMarker)
                     .Cast<Match>()
                     .Select(x => x.Groups["param"].Value)
                     .Where(x => !string.IsNullOrEmpty(x))
@@ -191,7 +185,7 @@ namespace Com.H.Data.EF.Relational
             {
                 conn.EnsureOpen();
 
-                var paramList = Regex.Matches(query, openMarker + PRegex + closeMarker)
+                var paramList = Regex.Matches(query, openMarker + QueryParams.RegexPattern + closeMarker)
                     .Cast<Match>()
                     .Select(x => x.Groups["param"].Value)
                     .Where(x => !string.IsNullOrEmpty(x))
@@ -365,8 +359,6 @@ namespace Com.H.Data.EF.Relational
                     query,
                     (IEnumerable<QueryParams>) queryParams,
                     closeConnectionOnExit);
-
-
             }
 
             IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
@@ -427,7 +419,7 @@ namespace Com.H.Data.EF.Relational
             {
                 await conn.EnsureOpenAsync();
 
-                var paramList = Regex.Matches(query, openMarker + PRegex + closeMarker)
+                var paramList = Regex.Matches(query, openMarker + QueryParams.RegexPattern + closeMarker)
                     .Cast<Match>()
                     .Select(x => x.Groups["param"].Value)
                     .Where(x => !string.IsNullOrEmpty(x))
@@ -601,7 +593,7 @@ namespace Com.H.Data.EF.Relational
             {
                 await conn.EnsureOpenAsync();
 
-                var paramList = Regex.Matches(query, openMarker + PRegex + closeMarker)
+                var paramList = Regex.Matches(query, openMarker + QueryParams.RegexPattern + closeMarker)
                     .Cast<Match>()
                     .Select(x => x.Groups["param"].Value)
                     .Where(x => !string.IsNullOrEmpty(x))
@@ -990,11 +982,11 @@ namespace Com.H.Data.EF.Relational
                 conn.EnsureOpen();
                 Dictionary<string, int> varNameCount = new Dictionary<string, int>();
 
-                var paramListIntersected = queryParams
+                var paramList = queryParams
                     .SelectMany(x =>
                     {
                         var dicParams = x.DataModel?.GetDataModelParameters();
-                        return Regex.Matches(query, x.OpenMarker + PRegex + x.CloseMarker)
+                        return Regex.Matches(query, x.OpenMarker + QueryParams.RegexPattern + x.CloseMarker)
                             .Cast<Match>()
                             .Select(x => x.Groups["param"].Value)
                             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -1010,14 +1002,13 @@ namespace Com.H.Data.EF.Relational
                                 NullReplacement = x.NullReplacement,
                                 Value = dicParams?.ContainsKey(varName) == true ? dicParams[varName] : null
                             });
-                    }
-                            ).ToList();
+                    }).ToList();
 
                 var command = conn.CreateCommand();
 
-                if (paramListIntersected.Count > 0)
+                if (paramList.Count > 0)
                 {
-                    foreach (var item in paramListIntersected)
+                    foreach (var item in paramList)
                     {
                         if (item.Value == null) query = query
                             .Replace(item.OpenMarker + item.VarName + item.CloseMarker,
