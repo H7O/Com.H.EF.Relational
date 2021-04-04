@@ -172,7 +172,8 @@ namespace Com.H.Data.EF.Relational
             string openMarker = "{{",
             string closeMarker = "}}",
             string nullReplacement = "null",
-            bool closeConnectionOnExit = false
+            bool closeConnectionOnExit = false,
+            bool keepColumnsOnEmpty = false
             )
         {
             if (dc == null) throw new ArgumentNullException(nameof(dc));
@@ -267,6 +268,22 @@ namespace Com.H.Data.EF.Relational
                     yield return result;
                 }
             }
+            else
+            {
+                if (keepColumnsOnEmpty)
+                {
+                    //Console.WriteLine("reader column count: " + reader.FieldCount);
+                    ExpandoObject result = new ExpandoObject();
+                    foreach (var item in Enumerable.Range(0, reader.FieldCount)
+                                .Select(x => new { Name = reader.GetName(x), Type = reader.GetFieldType(x) }))
+                    {
+
+                        result.TryAdd(item.Name, null);
+                        ////Console.WriteLine($"name = {item.Name}, type = {item.Value}");
+                    }
+                    yield return result;
+                }
+            }
             reader.EnsureClosed();
             if (closeConnectionOnExit) conn.EnsureClosed();
             yield break;
@@ -341,7 +358,8 @@ namespace Com.H.Data.EF.Relational
             string openMarker = "{{",
             string closeMarker = "}}",
             string nullReplacement = "null",
-            bool closeConnectionOnExit = false
+            bool closeConnectionOnExit = false,
+            bool keepColumnsOnEmpty = false
             )
         {
             if (dc == null) throw new ArgumentNullException(nameof(dc));
@@ -350,7 +368,9 @@ namespace Com.H.Data.EF.Relational
 
             if (queryParams == null)
                 return dc.ExecuteQueryDictionary(query, new Dictionary<string, object>(),
-                    openMarker, closeMarker, nullReplacement, closeConnectionOnExit);
+                    openMarker, closeMarker, nullReplacement, closeConnectionOnExit,
+                    keepColumnsOnEmpty
+                    );
             else
             {
                 if (typeof(IEnumerable<QueryParams>).IsAssignableFrom(queryParams.GetType()))
@@ -370,7 +390,7 @@ namespace Com.H.Data.EF.Relational
             //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
 
             return dc.ExecuteQueryDictionary(query, dictionaryParams, openMarker,
-                closeMarker, nullReplacement, closeConnectionOnExit);
+                closeMarker, nullReplacement, closeConnectionOnExit, keepColumnsOnEmpty);
 
         }
 
