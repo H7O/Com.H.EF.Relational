@@ -253,7 +253,7 @@ namespace Com.H.Data.EF.Relational
                         if (closeConnectionOnExit) conn.EnsureClosed();
                         throw;
                     }
-                    ExpandoObject result = new ExpandoObject();
+                    ExpandoObject result = new();
 
                     foreach (var item in Enumerable.Range(0, reader.FieldCount)
                             .Select(x => new { Name = reader.GetName(x), Value = reader.GetValue(x) }))
@@ -273,7 +273,7 @@ namespace Com.H.Data.EF.Relational
                 if (keepColumnsOnEmpty)
                 {
                     //Console.WriteLine("reader column count: " + reader.FieldCount);
-                    ExpandoObject result = new ExpandoObject();
+                    ExpandoObject result = new();
                     foreach (var item in Enumerable.Range(0, reader.FieldCount)
                                 .Select(x => new { Name = reader.GetName(x), Type = reader.GetFieldType(x) }))
                     {
@@ -682,7 +682,7 @@ namespace Com.H.Data.EF.Relational
                         if (closeConnectionOnExit) await conn.EnsureClosedAsync();
                         throw;
                     }
-                    ExpandoObject result = new ExpandoObject();
+                    ExpandoObject result = new();
 
                     foreach (var item in Enumerable.Range(0, reader.FieldCount)
                             .Select(x => new { Name = reader.GetName(x), Value = reader.GetValue(x) }))
@@ -1000,7 +1000,7 @@ namespace Com.H.Data.EF.Relational
             try
             {
                 conn.EnsureOpen();
-                Dictionary<string, int> varNameCount = new Dictionary<string, int>();
+                Dictionary<string, int> varNameCount = new();
 
                 var paramList = queryParams
                     .SelectMany(x =>
@@ -1017,9 +1017,9 @@ namespace Com.H.Data.EF.Relational
                                 DbParamName =
                                 $"@vxv_{(varNameCount.ContainsKey(varName) ? ++varNameCount[varName] : varNameCount[varName] = 1) }_{varName}"
                                 ,
-                                OpenMarker = x.OpenMarker,
-                                CloseMarker = x.CloseMarker,
-                                NullReplacement = x.NullReplacement,
+                                x.OpenMarker,
+                                x.CloseMarker,
+                                x.NullReplacement,
                                 Value = dicParams?.ContainsKey(varName) == true ? dicParams[varName] : null
                             });
                     }).ToList();
@@ -1075,7 +1075,7 @@ namespace Com.H.Data.EF.Relational
                         if (closeConnectionOnExit) conn.EnsureClosed();
                         throw;
                     }
-                    ExpandoObject result = new ExpandoObject();
+                    ExpandoObject result = new();
 
                     foreach (var item in Enumerable.Range(0, reader.FieldCount)
                             .Select(x => new { Name = reader.GetName(x), Value = reader.GetValue(x) }))
