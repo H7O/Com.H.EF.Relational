@@ -192,6 +192,9 @@ namespace Com.H.Data.EF.Relational
                     .Where(x => !string.IsNullOrEmpty(x))
                     .Select(x => x).Distinct().ToList();
 
+                var command = conn.CreateCommand();
+                command.CommandType = CommandType.Text;
+
                 if (paramList.Count > 0)
                 {
                     var joined = paramList
@@ -205,30 +208,25 @@ namespace Com.H.Data.EF.Relational
                         if (item.v == null) query = query
                             .Replace(openMarker + item.k + closeMarker,
                                 nullReplacement, true,
-                                CultureInfo.InstalledUICulture);
+                                CultureInfo.InvariantCulture);
                         else
+                        {
                             query = query
                             .Replace(openMarker + item.k + closeMarker,
                                 "@vxv_" + item.k, true,
                                 CultureInfo.InvariantCulture);
+                            var p = command.CreateParameter();
+                            p.ParameterName = "@vxv_" + item.k;
+                            p.Value = item.v;
+                            command.Parameters.Add(p);
+                        }
                     }
                 }
 
-                var command = conn.CreateCommand();
-                command.CommandText = query;
-                command.CommandType = CommandType.Text;
 
-                if (paramList.Count > 0)
-                {
-                    if (queryParams != null)
-                        foreach (var item in queryParams)
-                        {
-                            var p = command.CreateParameter();
-                            p.ParameterName = "@vxv_" + item.Key;
-                            p.Value = item.Value;
-                            command.Parameters.Add(p);
-                        }
-                }
+                command.CommandText = query;
+
+                
                 reader = command.ExecuteReader();
             }
             catch
@@ -491,7 +489,7 @@ namespace Com.H.Data.EF.Relational
                         if (item.v == null) query = query
                             .Replace(openMarker + item.k + closeMarker,
                                 nullReplacement, true,
-                                CultureInfo.InstalledUICulture);
+                                CultureInfo.InvariantCulture);
                         else
                         {
                             query = query
