@@ -362,7 +362,7 @@ namespace Com.H.Data.EF.Relational
             )
         {
             _ = ExecuteQuery(dc, cmdQuery, cmdQueryParams, openMarker, closeMarker,
-                null, closeConnectionOnExit, keepColumnsOnEmpty)
+                nullReplacement, closeConnectionOnExit, keepColumnsOnEmpty)
                 .ToList();
         }
 
