@@ -338,6 +338,37 @@ namespace Com.H.Data.EF.Relational
 
 
         /// <summary>
+        /// Dynamic results version of ExecuteCommand extension. Takes parameters in the form of either IDictionary of a string and object key value pairs,
+        /// or in the form of any object with properties, where the object properties serve as parameters
+        /// to be passed to the query.
+        /// The query string could have parameters placeholders in the form of property names enclosed with 
+        /// double curley brackets {{property_name}}, so that the extension method could use those placeholders
+        /// convert them to query parameters for security and pass them to the relational database for execution.
+        /// </summary>
+        /// <param name="dc"></param>
+        /// <param name="cmdQuery"></param>
+        /// <param name="cmdQueryParams"></param>
+        /// <param name="closeConnectionOnExit"></param>
+        /// <returns></returns>
+        public static void ExecuteCommand(
+            this DbContext dc,
+            string cmdQuery,
+            object cmdQueryParams = null,
+            string openMarker = "{{",
+            string closeMarker = "}}",
+            string nullReplacement = "null",
+            bool closeConnectionOnExit = false,
+            bool keepColumnsOnEmpty = false
+            )
+        {
+            ExecuteQuery(dc, cmdQuery, cmdQueryParams, openMarker, closeMarker,
+                null, closeConnectionOnExit, keepColumnsOnEmpty)
+                .ToList();
+        }
+
+
+
+        /// <summary>
         /// Dynamic results version of ExecuteQuery extension. Takes parameters in the form of either IDictionary of a string and object key value pairs,
         /// or in the form of any object with properties, where the object properties serve as parameters
         /// to be passed to the query.
@@ -388,10 +419,8 @@ namespace Com.H.Data.EF.Relational
             //:
             //queryParams.GetType().GetProperties()
             //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
-
             return dc.ExecuteQueryDictionary(query, dictionaryParams, openMarker,
                 closeMarker, nullReplacement, closeConnectionOnExit, keepColumnsOnEmpty);
-
         }
 
 
