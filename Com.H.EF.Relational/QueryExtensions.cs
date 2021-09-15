@@ -361,7 +361,7 @@ namespace Com.H.Data.EF.Relational
             bool keepColumnsOnEmpty = false
             )
         {
-            ExecuteQuery(dc, cmdQuery, cmdQueryParams, openMarker, closeMarker,
+            _ = ExecuteQuery(dc, cmdQuery, cmdQueryParams, openMarker, closeMarker,
                 null, closeConnectionOnExit, keepColumnsOnEmpty)
                 .ToList();
         }
