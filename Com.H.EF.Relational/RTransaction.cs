@@ -12,7 +12,7 @@ namespace Com.H.EF.Relational
     /// <summary>
     /// Direct (pure TSQL) transactional commands payload builder.
     /// </summary>
-    public class CmdTransaction
+    public class RTransaction
     {
         public string OpeningTemplate { get; set; } = "SET NOCOUNT ON;\r\n"
             + "set xact_abort on\r\n"
@@ -25,7 +25,7 @@ namespace Com.H.EF.Relational
 
         private List<QueryParams> QParams { get; set; }
         private StringBuilder Query { get; set; }
-        public CmdTransaction()
+        public RTransaction()
         {
             this.ClearQueries();
         }
@@ -61,12 +61,49 @@ namespace Com.H.EF.Relational
             this.QParams.Add(queryParams);
         }
 
-        public void Execute(DbContext dc)
+        public void ExecuteCommand(DbContext dc)
         {
             var query = this.Query.ToString() + this.ClosingTemplate;
             dc.ExecuteCommand(query, this.QParams);
             this.ClearQueries();
         }
+        public IEnumerable<T> ExecuteQuery<T>(DbContext dc)
+        {
+            var query = this.Query.ToString() + this.ClosingTemplate;
+            try
+            {
+                return dc.ExecuteQuery<T>(query, this.QParams);
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                this.ClearQueries();
+            }
+
+        }
+
+        public IEnumerable<dynamic> ExecuteQuery(DbContext dc)
+        {
+            var query = this.Query.ToString() + this.ClosingTemplate;
+            try
+            {
+                return dc.ExecuteQuery(query, this.QParams);
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                this.ClearQueries();
+            }
+
+        }
+
+
         private void ClearQueries()
         {
             this.QParams = new List<QueryParams>();
