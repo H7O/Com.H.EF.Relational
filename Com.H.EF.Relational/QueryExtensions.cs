@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Com.H.Data;
+using System.Data.SqlClient;
 
 namespace Com.H.Data.EF.Relational
 {
@@ -62,6 +63,7 @@ namespace Com.H.Data.EF.Relational
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
             DbDataReader reader = null;
+            DbCommand command = null;
             try
             {
                 conn.EnsureOpen();
@@ -72,7 +74,7 @@ namespace Com.H.Data.EF.Relational
                     .Where(x => !string.IsNullOrEmpty(x))
                     .Select(x => x).Distinct().ToList();
 
-                var command = conn.CreateCommand();
+                command = conn.CreateCommand();
                 command.CommandType = CommandType.Text;
 
 
@@ -110,12 +112,12 @@ namespace Com.H.Data.EF.Relational
 
                 reader = command.ExecuteReader();
             }
-            catch
+            catch(Exception ex)
             {
                 reader.EnsureClosed();
                 if (closeConnectionOnExit)
                     conn.EnsureClosed();
-                throw;
+                throw new Exception(ex.GenerateError(command));
             }
 
             if (reader.HasRows)
@@ -127,10 +129,11 @@ namespace Com.H.Data.EF.Relational
                         cont = reader.Read();
                         if (!cont) break;
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         reader.EnsureClosed();
                         if (closeConnectionOnExit) conn.EnsureClosed();
+                        // throw new Exception(ex.GenerateError(command));
                         throw;
                     }
                     T result = Activator.CreateInstance<T>();
@@ -182,6 +185,7 @@ namespace Com.H.Data.EF.Relational
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
             DbDataReader reader = null;
+            DbCommand command = null;
             try
             {
                 conn.EnsureOpen();
@@ -192,7 +196,7 @@ namespace Com.H.Data.EF.Relational
                     .Where(x => !string.IsNullOrEmpty(x))
                     .Select(x => x).Distinct().ToList();
 
-                var command = conn.CreateCommand();
+                command = conn.CreateCommand();
                 command.CommandType = CommandType.Text;
 
                 if (paramList.Count > 0)
@@ -229,11 +233,13 @@ namespace Com.H.Data.EF.Relational
                 
                 reader = command.ExecuteReader();
             }
-            catch
+            catch(Exception ex)
             {
                 reader.EnsureClosed();
                 if (closeConnectionOnExit) conn.EnsureClosed();
-                throw;
+                string errMsg = ex.GenerateError(command);
+
+                throw new Exception(errMsg);
             }
 
             if (reader.HasRows)
@@ -245,10 +251,12 @@ namespace Com.H.Data.EF.Relational
                         cont = reader.Read();
                         if (!cont) break;
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         reader.EnsureClosed();
                         if (closeConnectionOnExit) conn.EnsureClosed();
+                        string errMsg = ex.GenerateError(command);
+                        //throw new Exception(errMsg);
                         throw;
                     }
                     ExpandoObject result = new();
@@ -462,6 +470,7 @@ namespace Com.H.Data.EF.Relational
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
             DbDataReader reader = null;
+            DbCommand command = null;
             try
             {
                 await conn.EnsureOpenAsync();
@@ -472,7 +481,7 @@ namespace Com.H.Data.EF.Relational
                     .Where(x => !string.IsNullOrEmpty(x))
                     .Select(x => x).Distinct().ToList();
 
-                var command = conn.CreateCommand();
+                command = conn.CreateCommand();
                 command.CommandType = CommandType.Text;
 
 
@@ -513,12 +522,12 @@ namespace Com.H.Data.EF.Relational
                         : command.ExecuteReaderAsync((CancellationToken)cancellationToken));
 
             }
-            catch
+            catch(Exception ex)
             {
                 await reader.EnsureClosedAsync();
                 if (closeConnectionOnExit)
                     await conn.EnsureClosedAsync();
-                throw;
+                throw new Exception(ex.GenerateError(command));
             }
 
             if (reader.HasRows)
@@ -530,10 +539,11 @@ namespace Com.H.Data.EF.Relational
                         cont = reader.Read();
                         if (!cont) break;
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         await reader.EnsureClosedAsync();
                         if (closeConnectionOnExit) await conn.EnsureClosedAsync();
+                        // throw new Exception(ex.GenerateError(command));
                         throw;
                     }
                     T result = Activator.CreateInstance<T>();
@@ -636,6 +646,7 @@ namespace Com.H.Data.EF.Relational
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
             DbDataReader reader = null;
+            DbCommand command = null;
             try
             {
                 await conn.EnsureOpenAsync();
@@ -668,7 +679,7 @@ namespace Com.H.Data.EF.Relational
                     }
                 }
 
-                var command = conn.CreateCommand();
+                command = conn.CreateCommand();
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
 
@@ -687,11 +698,11 @@ namespace Com.H.Data.EF.Relational
                         ? command.ExecuteReaderAsync()
                         : command.ExecuteReaderAsync((CancellationToken)cancellationToken));
             }
-            catch
+            catch(Exception ex)
             {
                 await reader.EnsureClosedAsync();
                 if (closeConnectionOnExit) await conn.EnsureClosedAsync();
-                throw;
+                throw new Exception(ex.GenerateError(command));
             }
 
             if (reader.HasRows)
@@ -703,11 +714,11 @@ namespace Com.H.Data.EF.Relational
                         cont = await reader.ReadAsync();
                         if (!cont) break;
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         await reader.EnsureClosedAsync();
                         if (closeConnectionOnExit) await conn.EnsureClosedAsync();
-                        throw;
+                        throw new Exception(ex.GenerateError(command));
                     }
                     ExpandoObject result = new();
 
@@ -1024,6 +1035,7 @@ namespace Com.H.Data.EF.Relational
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
             DbDataReader reader = null;
+            DbCommand command = null;
             try
             {
                 conn.EnsureOpen();
@@ -1051,16 +1063,20 @@ namespace Com.H.Data.EF.Relational
                             });
                     }).ToList();
 
-                var command = conn.CreateCommand();
+                command = conn.CreateCommand();
 
                 if (paramList.Count > 0)
                 {
                     foreach (var item in paramList)
                     {
-                        if (item.Value == null) query = query
+                        if (item.Value == null)
+                        {
+                            query = query
                             .Replace(item.OpenMarker + item.VarName + item.CloseMarker,
                                 item.NullReplacement, true,
                                 CultureInfo.InstalledUICulture);
+                            continue;
+                        }
                         else
                         {
                             query = query
@@ -1080,11 +1096,11 @@ namespace Com.H.Data.EF.Relational
 
                 reader = command.ExecuteReader();
             }
-            catch
+            catch(Exception ex)
             {
                 reader.EnsureClosed();
                 if (closeConnectionOnExit) conn.EnsureClosed();
-                throw;
+                throw new Exception(ex.GenerateError(command));
             }
 
             if (reader.HasRows)
@@ -1096,10 +1112,11 @@ namespace Com.H.Data.EF.Relational
                         cont = reader.Read();
                         if (!cont) break;
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         reader.EnsureClosed();
                         if (closeConnectionOnExit) conn.EnsureClosed();
+                        // throw new Exception(ex.GenerateError(command));
                         throw;
                     }
                     ExpandoObject result = new();
@@ -1122,6 +1139,24 @@ namespace Com.H.Data.EF.Relational
             yield break;
         }
 
+        private static string GenerateError(
+            this Exception ex,
+            DbCommand command
+            //string query, 
+            //IDictionary<string, object> queryParams
+            )
+        {
+            string errMsg = "Error executing query:"
+                + "\r\n-----------\r\n"
+                + "Parameters:\r\n"
+                + string.Join("\r\n", 
+                command.Parameters.Cast<DbParameter>().Select(x => $"{x.ParameterName} = {x.Value}"))
+                + "\r\n-----\r\nQuery\r\n"
+                + command.CommandText + "\r\n-------\r\n"
+                + "Error msg:\r\n"
+                + ex.Message;
+            return errMsg;
+        }
 
 
 
