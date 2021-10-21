@@ -628,7 +628,7 @@ namespace Com.H.Data.EF.Relational
 
 
 
-
+        // get here 1 done
         private static async IAsyncEnumerable<dynamic> ExecuteQueryDictionaryAsync(
             this DbContext dc,
             string query,
@@ -657,6 +657,9 @@ namespace Com.H.Data.EF.Relational
                     .Where(x => !string.IsNullOrEmpty(x))
                     .Select(x => x).Distinct().ToList();
 
+                command = conn.CreateCommand();
+                command.CommandType = CommandType.Text;
+
                 if (paramList.Count > 0)
                 {
                     var joined = paramList
@@ -672,28 +675,22 @@ namespace Com.H.Data.EF.Relational
                                 nullReplacement, true,
                                 CultureInfo.InstalledUICulture);
                         else
+                        {
                             query = query
                             .Replace(openMarker + item.k + closeMarker,
                                 "@vxv_" + item.k, true,
                                 CultureInfo.InvariantCulture);
+                            var p = command.CreateParameter();
+                            p.ParameterName = "@vxv_" + item.k;
+                            p.Value = item.v;
+                            command.Parameters.Add(p);
+                        }
                     }
                 }
 
-                command = conn.CreateCommand();
+                
                 command.CommandText = query;
-                command.CommandType = CommandType.Text;
 
-                if (paramList.Count > 0)
-                {
-                    if (queryParams != null)
-                        foreach (var item in queryParams)
-                        {
-                            var p = command.CreateParameter();
-                            p.ParameterName = "@vxv_" + item.Key;
-                            p.Value = item.Value;
-                            command.Parameters.Add(p);
-                        }
-                }
                 reader = await (cancellationToken == null
                         ? command.ExecuteReaderAsync()
                         : command.ExecuteReaderAsync((CancellationToken)cancellationToken));
@@ -1075,7 +1072,7 @@ namespace Com.H.Data.EF.Relational
                             .Replace(item.OpenMarker + item.VarName + item.CloseMarker,
                                 item.NullReplacement, true,
                                 CultureInfo.InstalledUICulture);
-                            continue;
+                            // continue;
                         }
                         else
                         {
@@ -1083,11 +1080,13 @@ namespace Com.H.Data.EF.Relational
                             .Replace(item.OpenMarker + item.VarName + item.CloseMarker,
                             item.DbParamName, true,
                                 CultureInfo.InvariantCulture);
+
+                            var p = command.CreateParameter();
+                            p.ParameterName = item.DbParamName;
+                            p.Value = item.Value;
+                            command.Parameters.Add(p);
+
                         }
-                        var p = command.CreateParameter();
-                        p.ParameterName = item.DbParamName;
-                        p.Value = item.Value;
-                        command.Parameters.Add(p);
                     }
                 }
 
