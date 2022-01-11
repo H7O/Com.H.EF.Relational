@@ -129,7 +129,7 @@ namespace Com.H.Data.EF.Relational
                         cont = reader.Read();
                         if (!cont) break;
                     }
-                    catch(Exception ex)
+                    catch
                     {
                         reader.EnsureClosed();
                         if (closeConnectionOnExit) conn.EnsureClosed();
@@ -539,7 +539,7 @@ namespace Com.H.Data.EF.Relational
                         cont = reader.Read();
                         if (!cont) break;
                     }
-                    catch(Exception ex)
+                    catch
                     {
                         await reader.EnsureClosedAsync();
                         if (closeConnectionOnExit) await conn.EnsureClosedAsync();
@@ -1111,7 +1111,7 @@ namespace Com.H.Data.EF.Relational
                         cont = reader.Read();
                         if (!cont) break;
                     }
-                    catch(Exception ex)
+                    catch
                     {
                         reader.EnsureClosed();
                         if (closeConnectionOnExit) conn.EnsureClosed();

@@ -44,7 +44,7 @@ namespace Com.H.EF.Relational
 
             string adjustedQuery = query.ReplaceQueryParameterMarkers(
                 openMarker, closeMarker, dstOpenMarker, dstCloseMarker);
-            QueryParams qParams = new QueryParams()
+            var qParams = new QueryParams()
             {
                 OpenMarker = dstOpenMarker,
                 CloseMarker = dstCloseMarker,
