@@ -1,5 +1,4 @@
 ﻿using Com.H.Data;
-using Com.H.Data.EF.Relational;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

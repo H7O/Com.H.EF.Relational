@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Com.H.Data;
 using System.Data.SqlClient;
 
-namespace Com.H.Data.EF.Relational
+namespace Com.H.EF.Relational
 {
 
 
