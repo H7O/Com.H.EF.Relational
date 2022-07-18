@@ -36,7 +36,7 @@ namespace Com.H.EF.Relational
 
         public static void EnsureOpen(this DbConnection conn)
         {
-            if (conn == null) throw new ArgumentNullException(nameof(conn));
+            if (conn is null) throw new ArgumentNullException(nameof(conn));
             if (conn.State != System.Data.ConnectionState.Open) conn.Open();
         }
 
@@ -136,6 +136,64 @@ namespace Com.H.EF.Relational
                         // throw new Exception(ex.GenerateError(command));
                         throw;
                     }
+
+                    
+
+                    // special case for a single value for a primitive type (support columnless values)
+                    if (typeof(T) == typeof(string)
+                        ||
+                        typeof(T) == typeof(int)
+                        ||
+                        typeof(T) == typeof(double)
+                        ||
+                        typeof(T) == typeof(decimal)
+                        ||
+                        typeof(T) == typeof(int?)
+                        ||
+                        typeof(T) == typeof(double?)
+                        ||
+                        typeof(T) == typeof(decimal?)
+                        )
+                    {
+                        var value = reader.GetValue(0);
+                        if (value == DBNull.Value)
+                        {
+                            yield return (T)(object)null;
+                            continue;
+                        }
+                        yield return (T)(object)value;
+                        continue;
+                    }
+
+
+                    if (typeof(T) == typeof(DateTime)
+                        )
+                    {
+                        var value = reader.GetValue(0);
+                        DateTime dt = new();
+                        if (value != DBNull.Value)
+                            _ = DateTime.TryParse(value.ToString(), out dt);
+                        yield return (T)(object)dt;
+                        continue;
+                    }
+
+
+                    if (typeof(T) == typeof(DateTime?))
+                    {
+                        var value = reader.GetValue(0);
+                        DateTime dt = new();
+                        if (value == DBNull.Value
+                            ||
+                            !DateTime.TryParse(value.ToString(), out dt))
+                        {
+                            yield return (T)(object)null;
+                            continue;
+                        }
+                        yield return (T)(object)dt;
+                        continue;
+                    }
+
+
                     T result = Activator.CreateInstance<T>();
                     var joined =
                     typeof(T).GetCachedProperties()
@@ -323,11 +381,8 @@ namespace Com.H.EF.Relational
             if (dc == null) throw new ArgumentNullException(nameof(dc));
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
 
-
-
             if (queryParams == null)
                 return dc.ExecuteQueryDictionary<T>(query, new Dictionary<string, object>(), openMarker, closeMarker, nullReplacement, closeConnectionOnExit);
-
 
             IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
             //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
@@ -546,7 +601,7 @@ namespace Com.H.EF.Relational
                         // throw new Exception(ex.GenerateError(command));
                         throw;
                     }
-                    T result = Activator.CreateInstance<T>();
+                    T result = (typeof(T) == typeof(string))?(T) (object) (string) null: Activator.CreateInstance<T>();
                     var joined =
                     typeof(T).GetCachedProperties()
                         .LeftJoin(
@@ -1026,9 +1081,10 @@ namespace Com.H.EF.Relational
             bool closeConnectionOnExit = false
             )
         {
-            if (dc == null) throw new ArgumentNullException(nameof(dc));
+            if (dc is null) throw new ArgumentNullException(nameof(dc));
             queryParams ??= new List<QueryParams>() { new QueryParams() };
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
+            if (dc.Database is null) throw new NullReferenceException("Com.H.EF.Relational.QueryExtensions.ExecuteQueryNested(): dc.Database is null");
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
             DbDataReader reader = null;
@@ -1037,7 +1093,6 @@ namespace Com.H.EF.Relational
             {
                 conn.EnsureOpen();
                 Dictionary<string, int> varNameCount = new();
-
                 var paramList = queryParams
                     .SelectMany(x =>
                     {
@@ -1061,7 +1116,6 @@ namespace Com.H.EF.Relational
                     }).ToList();
 
                 command = conn.CreateCommand();
-
                 if (paramList.Count > 0)
                 {
                     foreach (var item in paramList)
@@ -1089,7 +1143,6 @@ namespace Com.H.EF.Relational
                         }
                     }
                 }
-
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
 
@@ -1119,7 +1172,6 @@ namespace Com.H.EF.Relational
                         throw;
                     }
                     ExpandoObject result = new();
-
                     foreach (var item in Enumerable.Range(0, reader.FieldCount)
                             .Select(x => new { Name = reader.GetName(x), Value = reader.GetValue(x) }))
                     {
