@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
+﻿using System.Data.Common;
 using Com.H.Linq;
 using Com.H.Reflection;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Data;
 using System.Dynamic;
-using System.Threading.Tasks;
-using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Com.H.Data;
 
@@ -46,10 +41,10 @@ namespace Com.H.EF.Relational
         }
 
 
-        private static IEnumerable<T> ExecuteQueryDictionary<T>(
+        private static IEnumerable<T?> ExecuteQueryDictionary<T>(
             this DbContext dc,
             string query,
-            IDictionary<string, object> queryParams = null,
+            IDictionary<string, object>? queryParams = null,
             string openMarker = "{{",
             string closeMarker = "}}",
             string nullReplacement = "null",
@@ -60,8 +55,8 @@ namespace Com.H.EF.Relational
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
-            DbDataReader reader = null;
-            DbCommand command = null;
+            DbDataReader? reader = null;
+            DbCommand? command = null;
             try
             {
                 conn.EnsureOpen();
@@ -79,7 +74,7 @@ namespace Com.H.EF.Relational
                 if (paramList.Count > 0)
                 {
                     var joined = paramList
-                        .LeftJoin(queryParams,
+                        .LeftJoin(queryParams??new Dictionary<string, object>(),
                         pl => pl.ToUpper(CultureInfo.InvariantCulture),
                         p => p.Key.ToUpper(CultureInfo.InvariantCulture),
                         (pl, p) => new { k = pl, v = p.Value }).ToList();
@@ -112,10 +107,10 @@ namespace Com.H.EF.Relational
             }
             catch(Exception ex)
             {
-                reader.EnsureClosed();
+                reader?.EnsureClosed();
                 if (closeConnectionOnExit)
                     conn.EnsureClosed();
-                throw new Exception(ex.GenerateError(command));
+                throw new Exception(ex.GenerateError(command, query, queryParams));
             }
 
             if (reader.HasRows)
@@ -156,7 +151,7 @@ namespace Com.H.EF.Relational
                         var value = reader.GetValue(0);
                         if (value == DBNull.Value)
                         {
-                            yield return (T)(object)null;
+                            yield return (T?)(object?)null;
                             continue;
                         }
                         yield return (T)(object)value;
@@ -184,7 +179,7 @@ namespace Com.H.EF.Relational
                             ||
                             !DateTime.TryParse(value.ToString(), out dt))
                         {
-                            yield return (T)(object)null;
+                            yield return (T?)(object?)null;
                             continue;
                         }
                         yield return (T)(object)dt;
@@ -204,13 +199,16 @@ namespace Com.H.EF.Relational
                             (dst, src) => new { dst, src })
                             ;
 
-                    foreach (var item in joined.Where(x => x.src != null && x.src.Value != null))
+                    foreach (var item in joined.Where(x => x?.src?.Value is not null))
                     {
                         try
                         {
+                            // item.src.Value cannot be null here
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                             item.dst.Info.SetValue(result,
                                 Convert.ChangeType(item.src.Value,
                                 item.dst.Info.PropertyType, CultureInfo.InvariantCulture));
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                         }
                         catch { }
                     }
@@ -227,7 +225,7 @@ namespace Com.H.EF.Relational
         private static IEnumerable<dynamic> ExecuteQueryDictionary(
             this DbContext dc,
             string query,
-            IDictionary<string, object> queryParams = null,
+            IDictionary<string, object>? queryParams = null,
             string openMarker = "{{",
             string closeMarker = "}}",
             string nullReplacement = "null",
@@ -240,8 +238,8 @@ namespace Com.H.EF.Relational
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
-            DbDataReader reader = null;
-            DbCommand command = null;
+            DbDataReader? reader = null;
+            DbCommand? command = null;
             try
             {
                 conn.EnsureOpen();
@@ -291,9 +289,9 @@ namespace Com.H.EF.Relational
             }
             catch(Exception ex)
             {
-                reader.EnsureClosed();
+                reader?.EnsureClosed();
                 if (closeConnectionOnExit) conn.EnsureClosed();
-                string errMsg = ex.GenerateError(command);
+                string errMsg = ex.GenerateError(command, query, queryParams);
 
                 throw new Exception(errMsg);
             }
@@ -311,7 +309,7 @@ namespace Com.H.EF.Relational
                     {
                         reader.EnsureClosed();
                         if (closeConnectionOnExit) conn.EnsureClosed();
-                        string errMsg = ex.GenerateError(command);
+                        string errMsg = ex.GenerateError(command, query, queryParams);
                         //throw new Exception(errMsg);
                         throw;
                     }
@@ -366,10 +364,10 @@ namespace Com.H.EF.Relational
         /// <param name="queryParams"></param>
         /// <param name="closeConnectionOnExit"></param>
         /// <returns></returns>
-        public static IEnumerable<T> ExecuteQuery<T>(
+        public static IEnumerable<T?> ExecuteQuery<T>(
             this DbContext dc,
             string query,
-            object queryParams = null,
+            object? queryParams = null,
             string openMarker = "{{",
             string closeMarker = "}}",
             string nullReplacement = "null",
@@ -379,16 +377,12 @@ namespace Com.H.EF.Relational
             if (dc == null) throw new ArgumentNullException(nameof(dc));
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
 
-            if (queryParams == null)
+            if (queryParams is null)
                 return dc.ExecuteQueryDictionary<T>(query, new Dictionary<string, object>(), openMarker, closeMarker, nullReplacement, closeConnectionOnExit);
-
+            // queryParams cannot be null here
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
-            //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
-            //?
-            //((IDictionary<string, object>)queryParams)
-            //:
-            //queryParams.GetType().GetProperties()
-            //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
             return dc.ExecuteQueryDictionary<T>(query, dictionaryParams, openMarker, closeMarker, nullReplacement, closeConnectionOnExit);
         }
@@ -412,7 +406,7 @@ namespace Com.H.EF.Relational
         public static void ExecuteCommand(
             this DbContext dc,
             string cmdQuery,
-            object cmdQueryParams = null,
+            object? cmdQueryParams = null,
             string openMarker = "{{",
             string closeMarker = "}}",
             string nullReplacement = "null",
@@ -444,7 +438,7 @@ namespace Com.H.EF.Relational
         public static IEnumerable<dynamic> ExecuteQuery(
             this DbContext dc,
             string query,
-            object queryParams = null,
+            object? queryParams = null,
             string openMarker = "{{",
             string closeMarker = "}}",
             string nullReplacement = "null",
@@ -456,7 +450,7 @@ namespace Com.H.EF.Relational
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
 
 
-            if (queryParams == null)
+            if (queryParams is null)
                 return dc.ExecuteQueryDictionary(query, new Dictionary<string, object>(),
                     openMarker, closeMarker, nullReplacement, closeConnectionOnExit,
                     keepColumnsOnEmpty
@@ -464,20 +458,18 @@ namespace Com.H.EF.Relational
             else
             {
                 if (typeof(IEnumerable<QueryParams>).IsAssignableFrom(queryParams.GetType()))
-                return ExecuteQuery(
-                    dc,
-                    query,
-                    (IEnumerable<QueryParams>) queryParams,
-                    closeConnectionOnExit);
+                    return ExecuteQuery(
+                        dc,
+                        query,
+                        (IEnumerable<QueryParams>) queryParams,
+                        closeConnectionOnExit);
             }
 
+            // queryParams cannot be null here
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
-            //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
-            //?
-            //((IDictionary<string, object>)queryParams)
-            //:
-            //queryParams.GetType().GetProperties()
-            //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+
             return dc.ExecuteQueryDictionary(query, dictionaryParams, openMarker,
                 closeMarker, nullReplacement, closeConnectionOnExit, keepColumnsOnEmpty);
         }
@@ -507,10 +499,10 @@ namespace Com.H.EF.Relational
         }
 
 
-        private static async IAsyncEnumerable<T> ExecuteQueryDictionaryAsync<T>(
+        private static async IAsyncEnumerable<T?> ExecuteQueryDictionaryAsync<T>(
             this DbContext dc,
             string query,
-            IDictionary<string, object> queryParams = null,
+            IDictionary<string, object>? queryParams = null,
             CancellationToken? cancellationToken = null,
             string openMarker = "{{",
             string closeMarker = "}}",
@@ -522,8 +514,8 @@ namespace Com.H.EF.Relational
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
-            DbDataReader reader = null;
-            DbCommand command = null;
+            DbDataReader? reader = null;
+            DbCommand? command = null;
             try
             {
                 await conn.EnsureOpenAsync();
@@ -541,7 +533,7 @@ namespace Com.H.EF.Relational
                 if (paramList.Count > 0)
                 {
                     var joined = paramList
-                        .LeftJoin(queryParams,
+                        .LeftJoin(queryParams??new Dictionary<string, object>(),
                         pl => pl.ToUpper(CultureInfo.InvariantCulture),
                         p => p.Key.ToUpper(CultureInfo.InvariantCulture),
                         (pl, p) => new { k = pl, v = p.Value }).ToList();
@@ -577,10 +569,11 @@ namespace Com.H.EF.Relational
             }
             catch(Exception ex)
             {
-                await reader.EnsureClosedAsync();
+                if (reader is not null)
+                    await reader.EnsureClosedAsync();
                 if (closeConnectionOnExit)
                     await conn.EnsureClosedAsync();
-                throw new Exception(ex.GenerateError(command));
+                throw new Exception(ex.GenerateError(command, query, queryParams));
             }
 
             if (reader.HasRows)
@@ -599,7 +592,7 @@ namespace Com.H.EF.Relational
                         // throw new Exception(ex.GenerateError(command));
                         throw;
                     }
-                    T result = (typeof(T) == typeof(string))?(T) (object) (string) null: Activator.CreateInstance<T>();
+                    T? result = (typeof(T) == typeof(string))?(T?) (object?) (string?) null: Activator.CreateInstance<T>();
                     var joined =
                     typeof(T).GetCachedProperties()
                         .LeftJoin(
@@ -611,13 +604,16 @@ namespace Com.H.EF.Relational
                             (dst, src) => new { dst, src })
                             ;
 
-                    foreach (var item in joined.Where(x => x.src != null && x.src.Value != null))
+                    foreach (var item in joined.Where(x => x?.src?.Value is not null))
                     {
                         try
                         {
+                            // item.src.Value cannot be null here
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                             item.dst.Info.SetValue(result,
                                 Convert.ChangeType(item.src.Value,
                                 item.dst.Info.PropertyType, CultureInfo.InvariantCulture));
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                         }
                         catch { }
                     }
@@ -633,10 +629,10 @@ namespace Com.H.EF.Relational
 
 
 
-        public static async IAsyncEnumerable<T> ExecuteQueryAsync<T>(
+        public static async IAsyncEnumerable<T?> ExecuteQueryAsync<T>(
             this DbContext dc,
             string query,
-            object queryParams = null,
+            object? queryParams = null,
             CancellationToken? cancellationToken = null,
             string openMarker = "{{",
             string closeMarker = "}}",
@@ -649,7 +645,7 @@ namespace Com.H.EF.Relational
 
 
 
-            if (queryParams == null)
+            if (queryParams is null)
                 await foreach (var item in dc.ExecuteQueryDictionaryAsync<T>(
                         query,
                         new Dictionary<string, object>(),
@@ -657,14 +653,10 @@ namespace Com.H.EF.Relational
                         closeMarker, nullReplacement, closeConnectionOnExit))
                     yield return item;
 
-
-            IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
-            //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
-            //?
-            //((IDictionary<string, object>)queryParams)
-            //:
-            //queryParams.GetType().GetProperties()
-            //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
+            // queryParams cannot be null here
+#pragma warning disable CS8604 // Possible null reference argument.
+            IDictionary<string, object>? dictionaryParams = queryParams.GetDataModelParameters();
+#pragma warning restore CS8604 // Possible null reference argument.
 
             await foreach (var item in dc.ExecuteQueryDictionaryAsync<T>(
                 query,
@@ -682,10 +674,10 @@ namespace Com.H.EF.Relational
 
 
         // get here 1 done
-        private static async IAsyncEnumerable<dynamic> ExecuteQueryDictionaryAsync(
+        private static async IAsyncEnumerable<dynamic?> ExecuteQueryDictionaryAsync(
             this DbContext dc,
             string query,
-            IDictionary<string, object> queryParams = null,
+            IDictionary<string, object>? queryParams = null,
             CancellationToken? cancellationToken = null,
             string openMarker = "{{",
             string closeMarker = "}}",
@@ -698,8 +690,8 @@ namespace Com.H.EF.Relational
             if (string.IsNullOrEmpty(query)) throw new ArgumentNullException(nameof(query));
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
-            DbDataReader reader = null;
-            DbCommand command = null;
+            DbDataReader? reader = null;
+            DbCommand? command = null;
             try
             {
                 await conn.EnsureOpenAsync();
@@ -750,9 +742,10 @@ namespace Com.H.EF.Relational
             }
             catch(Exception ex)
             {
-                await reader.EnsureClosedAsync();
+                if (reader is not null)
+                    await reader.EnsureClosedAsync();
                 if (closeConnectionOnExit) await conn.EnsureClosedAsync();
-                throw new Exception(ex.GenerateError(command));
+                throw new Exception(ex.GenerateError(command, query, queryParams));
             }
 
             if (reader.HasRows)
@@ -768,7 +761,7 @@ namespace Com.H.EF.Relational
                     {
                         await reader.EnsureClosedAsync();
                         if (closeConnectionOnExit) await conn.EnsureClosedAsync();
-                        throw new Exception(ex.GenerateError(command));
+                        throw new Exception(ex.GenerateError(command, query, queryParams));
                     }
                     ExpandoObject result = new();
 
@@ -791,10 +784,10 @@ namespace Com.H.EF.Relational
         }
 
 
-        public static async IAsyncEnumerable<dynamic> ExecuteQueryAsync(
+        public static async IAsyncEnumerable<dynamic?> ExecuteQueryAsync(
             this DbContext dc,
             string query,
-            object queryParams = null,
+            object? queryParams = null,
             CancellationToken? cancellationToken = null,
             string openMarker = "{{",
             string closeMarker = "}}",
@@ -817,14 +810,10 @@ namespace Com.H.EF.Relational
                     nullReplacement,
                     closeConnectionOnExit))
                     yield return item;
-
-            IDictionary<string, object> dictionaryParams = queryParams.GetDataModelParameters();
-            //typeof(IDictionary<string, object>).IsAssignableFrom(queryParams.GetType())
-            //?
-            //((IDictionary<string, object>)queryParams)
-            //:
-            //queryParams.GetType().GetProperties()
-            //                .ToDictionary(k => k.Name, v => v.GetValue(queryParams, null));
+            // queryParams cannot be null here
+#pragma warning disable CS8604 // Possible null reference argument.
+            IDictionary<string, object>? dictionaryParams = queryParams.GetDataModelParameters();
+#pragma warning restore CS8604 // Possible null reference argument.
 
             await foreach (var item in dc.ExecuteQueryDictionaryAsync(
                 query,
@@ -840,25 +829,7 @@ namespace Com.H.EF.Relational
 
         #endregion
         #region query generation
-        //public static Dictionary<string, object> GenerateQueryParams<T>(this T obj) where T : class
-        //{
-        //    if (obj == null) return null;
-        //    PropertyInfo[] srcProperties = obj.GetType().GetProperties();
-        //    Dictionary<string, object> dic = new Dictionary<string, object>();
-        //    foreach (PropertyInfo srcPInfo in srcProperties)
-        //    {
-        //        object value = null;
-        //        try
-        //        {
-        //            value = srcPInfo.GetValue(obj, null);
-        //        }
-        //        catch { }
-        //        dic[srcPInfo.Name] = value;
-        //    }
-        //    return dic;
-        //}
-
-        public static string GenerateInsertCmd<T>(
+        public static string? GenerateInsertCmd<T>(
             this T obj,
             string tableName,
             string openMarker = "{{",
@@ -873,7 +844,7 @@ namespace Com.H.EF.Relational
         }
 
 
-        public static string GenerateInsertCmd(
+        public static string? GenerateInsertCmd(
             this List<string> fields,
             string tableName,
             string openMarker = "{{",
@@ -916,7 +887,7 @@ namespace Com.H.EF.Relational
             }
             return query + ")";
         }
-        public static string GenerateInsertCmd(
+        public static string? GenerateInsertCmd(
             this Dictionary<string, object> fields,
             string tableName,
             string openMarker = "{{",
@@ -933,11 +904,11 @@ namespace Com.H.EF.Relational
         }
 
 
-        public static string GenerateUpdateCmd(
+        public static string? GenerateUpdateCmd(
             this List<string> fields,
             string tableName,
             string whereClause = "where [id] = {{id}}",
-            List<string> ignoreProperties = null,
+            List<string>? ignoreProperties = null,
             string openMarker = "{{",
             string closeMarker = "}}"
             )
@@ -973,11 +944,11 @@ namespace Com.H.EF.Relational
 
         }
 
-        public static string GenerateUpdateCmd(
+        public static string? GenerateUpdateCmd(
             this Dictionary<string, object> fields,
             string tableName,
             string whereClause = "where [id] = {{id}}",
-            List<string> ignoreProperties = null,
+            List<string>? ignoreProperties = null,
             string openMarker = "{{",
             string closeMarker = "}}"
             )
@@ -996,11 +967,11 @@ namespace Com.H.EF.Relational
 
 
 
-        public static string GenerateUpdateCmd<T>(
+        public static string? GenerateUpdateCmd<T>(
             this T obj,
             string tableName,
             string whereClause = "where [id] = {{id}}",
-            List<string> ignoreProperties = null,
+            List<string>? ignoreProperties = null,
             string openMarker = "{{",
             string closeMarker = "}}"
             ) where T : class
@@ -1013,11 +984,11 @@ namespace Com.H.EF.Relational
                 whereClause, ignoreProperties, openMarker, closeMarker);
         }
 
-        public static (string, IDictionary<string, object>) GenerateUpdateCmdAndParams<T>(
+        public static (string?, IDictionary<string, object>?) GenerateUpdateCmdAndParams<T>(
             this T obj,
             string tableName,
             string whereClause = "where [id] = {{id}}",
-            List<string> ignoreProperties = null,
+            List<string>? ignoreProperties = null,
             string openMarker = "{{",
             string closeMarker = "}}"
             ) where T : class
@@ -1031,7 +1002,7 @@ namespace Com.H.EF.Relational
                 fields);
         }
 
-        public static (string, IDictionary<string, object>) GenerateInsertCmdAndParams<T>(
+        public static (string?, IDictionary<string, object>?) GenerateInsertCmdAndParams<T>(
             this T obj,
             string tableName,
             string openMarker = "{{",
@@ -1085,8 +1056,8 @@ namespace Com.H.EF.Relational
             if (dc.Database is null) throw new NullReferenceException("Com.H.EF.Relational.QueryExtensions.ExecuteQueryNested(): dc.Database is null");
             var conn = dc.Database.GetDbConnection();
             bool cont = true;
-            DbDataReader reader = null;
-            DbCommand command = null;
+            DbDataReader? reader = null;
+            DbCommand? command = null;
             try
             {
                 conn.EnsureOpen();
@@ -1148,9 +1119,9 @@ namespace Com.H.EF.Relational
             }
             catch(Exception ex)
             {
-                reader.EnsureClosed();
+                reader?.EnsureClosed();
                 if (closeConnectionOnExit) conn.EnsureClosed();
-                throw new Exception(ex.GenerateError(command));
+                throw new Exception(ex.GenerateError(command, query, queryParams));
             }
 
             if (reader.HasRows)
@@ -1190,21 +1161,75 @@ namespace Com.H.EF.Relational
 
         private static string GenerateError(
             this Exception ex,
-            DbCommand command
-            //string query, 
-            //IDictionary<string, object> queryParams
+            DbCommand? command,
+            string query, 
+            IDictionary<string, object>? queryParams
             )
         {
-            string errMsg = "Error executing query:"
-                + "\r\n-----------\r\n"
+            string errMsg = "Error executing query:";
+
+            if (command is not null)
+                errMsg +=
+                "\r\n-----------\r\n"
                 + "Parameters:\r\n"
-                + string.Join("\r\n", 
-                command.Parameters.Cast<DbParameter>().Select(x => $"{x.ParameterName} = {x.Value}"))
-                + "\r\n-----\r\nQuery\r\n"
-                + command.CommandText + "\r\n-------\r\n"
-                + "Error msg:\r\n"
+                + string.Join("\r\n",
+                command.Parameters.Cast<DbParameter>().Select(x => $"{x.ParameterName} = {x.Value}"));
+            else if (queryParams is not null)
+                errMsg +=
+                "\r\n-----------\r\n"
+                + "Parameters:\r\n"
+                + string.Join("\r\n",
+                queryParams.Select(x=> $"{x.Key} = {x.Value}"));
+
+            if (command is not null)
+                errMsg += "\r\n-----\r\nQuery\r\n"
+                + command.CommandText + "\r\n-------\r\n";
+            else if (query is not null)
+                errMsg += "\r\n-----\r\nQuery\r\n"
+                + query + "\r\n-------\r\n";
+
+            errMsg += "Error msg:\r\n"
                 + ex.Message;
             return errMsg;
+
+        }
+
+        private static string GenerateError(
+            this Exception ex,
+            DbCommand? command,
+            string query,
+            IEnumerable<QueryParams>? queryParams
+            )
+        {
+            string errMsg = "Error executing query:";
+
+            if (command is not null)
+                errMsg +=
+                "\r\n-----------\r\n"
+                + "Parameters:\r\n"
+                + string.Join("\r\n",
+                command.Parameters.Cast<DbParameter>().Select(x => $"{x.ParameterName} = {x.Value}"));
+            else if (queryParams is not null)
+                errMsg +=
+                "\r\n-----------\r\n"
+                + "Parameters:\r\n"
+                + string.Join("\r\n",
+                queryParams
+                // .Where(x=>x?.DataModel is not null)
+                .SelectMany(x=>x?.DataModel?.GetDataModelParameters()??new Dictionary<string, object>())
+                .Select(x => $"{x.Key} = {x.Value}"));
+
+            if (command is not null)
+                errMsg += "\r\n-----\r\nQuery\r\n"
+                + command.CommandText + "\r\n-------\r\n";
+            else if (query is not null)
+                errMsg += "\r\n-----\r\nQuery\r\n"
+                + query + "\r\n-------\r\n";
+
+            errMsg += "Error msg:\r\n"
+                + ex.Message;
+            return errMsg;
+
         }
 
 
