@@ -69,7 +69,7 @@ namespace Com.H.EF.Relational
             dc.ExecuteCommand(query, this.QParams);
             this.ClearQueries();
         }
-        public IEnumerable<T> ExecuteQuery<T>(DbContext dc)
+        public IEnumerable<T?> ExecuteQuery<T>(DbContext dc)
         {
             var query = this.Query.ToString() + this.ClosingTemplate;
             try

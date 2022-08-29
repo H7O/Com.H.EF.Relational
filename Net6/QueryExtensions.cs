@@ -1033,7 +1033,7 @@ namespace Com.H.EF.Relational
         public static IEnumerable<dynamic> ExecuteQuery(
             this DbContext dc,
             string query,
-            IEnumerable<QueryParams> queryParams,
+            IEnumerable<QueryParams>? queryParams,
             bool closeConnectionOnExit = false
             )
         {
@@ -1046,7 +1046,7 @@ namespace Com.H.EF.Relational
         private static IEnumerable<dynamic> ExecuteQueryNested(
             this DbContext dc,
             string query,
-            IEnumerable<QueryParams> queryParams,
+            IEnumerable<QueryParams>? queryParams,
             bool closeConnectionOnExit = false
             )
         {
