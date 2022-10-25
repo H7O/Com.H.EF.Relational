@@ -7,6 +7,8 @@ using System.Data;
 using System.Dynamic;
 using Microsoft.EntityFrameworkCore;
 using Com.H.Data;
+using System.Reflection;
+using Com.H.Text;
 
 namespace Com.H.EF.Relational
 {
@@ -1235,6 +1237,85 @@ namespace Com.H.EF.Relational
 
 
         #endregion
+
+        #region Creating DbContext for a given connection string
+
+        /// <summary>
+        /// Creates a DbContext for a given connection string. Support currently for SQL Server and SQLite
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="providerClientAssemblyNameOrDllPath"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
+        public static DbContext CreateDbContext(this string connectionString, string? providerClientAssemblyNameOrDllPath = "Microsoft.EntityFrameworkCore.SqlServer")
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentNullException(nameof(connectionString));
+
+            var clientAssembly = string.IsNullOrWhiteSpace(providerClientAssemblyNameOrDllPath) 
+                ? "Microsoft.EntityFrameworkCore.SqlServer": providerClientAssemblyNameOrDllPath;
+
+            
+            var assembly = Com.H.Reflection.ReflectionExtensions.LoadAssembly(clientAssembly);
+            if (assembly is null && string.IsNullOrWhiteSpace(providerClientAssemblyNameOrDllPath))
+            {
+                clientAssembly = "Microsoft.EntityFrameworkCore.Sqlite";
+                assembly = Com.H.Reflection.ReflectionExtensions.LoadAssembly(clientAssembly);
+            }
+
+            if (assembly is null)
+            {
+                if (string.IsNullOrWhiteSpace(providerClientAssemblyNameOrDllPath))
+                    throw new NotSupportedException("Couldn't find default assemblies" 
+                        + " Microsoft.EntityFrameworkCore.SqlServer nor Microsoft.EntityFrameworkCore.Sqlite." 
+                        + " Either add NuGet packages for any of the default assemblies"
+                        + $" or provide your custom assembly name or dll path in {nameof(providerClientAssemblyNameOrDllPath)} parameter");
+                else throw new NotSupportedException($"Couldn't find assembly {providerClientAssemblyNameOrDllPath}");
+            }
+            var optionsBuilder = new DbContextOptionsBuilder<DbContext>();
+            if (clientAssembly?.EqualsIgnoreCase("Microsoft.EntityFrameworkCore.SqlServer") == true)
+            {
+
+                var extClassType = assembly.GetType("Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions");
+                if (extClassType is null)
+                    throw new NotSupportedException("Couldn't find class Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions"
+                        + " in assembly Microsoft.EntityFrameworkCore.SqlServer");
+                var thirdParam = Type.GetType("System.Action`1[[Microsoft.EntityFrameworkCore.Infrastructure.SqlServerDbContextOptionsBuilder, Microsoft.EntityFrameworkCore.SqlServer]]");
+                if (thirdParam is null) throw new NotSupportedException("Couldn't find type System.Action`1[[Microsoft.EntityFrameworkCore.Infrastructure.SqlServerDbContextOptionsBuilder, Microsoft.EntityFrameworkCore.SqlServer]]");
+                var method = extClassType.GetMethod("UseSqlServer", new Type[] { typeof(DbContextOptionsBuilder<DbContext>), typeof(string), thirdParam });
+                if (method is null)
+                    throw new NotSupportedException("Couldn't find method UseSqlServer in class Microsoft.EntityFrameworkCore.SqlServerDbContextOptionsExtensions"
+                        + " of assembly Microsoft.EntityFrameworkCore.SqlServer");
+
+                var args = new object[] { optionsBuilder, connectionString, null! };
+                method.Invoke(null, args);
+                return new DbContext(optionsBuilder.Options);
+            }
+            else if (providerClientAssemblyNameOrDllPath?.EqualsIgnoreCase("Microsoft.EntityFrameworkCore.Sqlite") == true)
+            {
+                // https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore.sqlitedbcontextoptionsbuilderextensions.usesqlite?view=efcore-6.0#microsoft-entityframeworkcore-sqlitedbcontextoptionsbuilderextensions-usesqlite-1(microsoft-entityframeworkcore-dbcontextoptionsbuilder((-0))-system-string-system-action((microsoft-entityframeworkcore-infrastructure-sqlitedbcontextoptionsbuilder)))
+
+                var extClassType = assembly.GetType("Microsoft.EntityFrameworkCore.SqliteDbContextOptionsBuilderExtensions");
+                if (extClassType is null)
+                    throw new NotSupportedException("Couldn't find class Microsoft.EntityFrameworkCore.SqliteDbContextOptionsBuilderExtensions"
+                        + " in assembly Microsoft.EntityFrameworkCore.Sqlite");
+                var thirdParam = Type.GetType("System.Action`1[[Microsoft.EntityFrameworkCore.Infrastructure.SqliteDbContextOptionsBuilder, Microsoft.EntityFrameworkCore.Sqlite]]");
+                if (thirdParam is null) throw new NotSupportedException("Couldn't find type System.Action`1[[Microsoft.EntityFrameworkCore.Infrastructure.SqliteDbContextOptionsBuilder, Microsoft.EntityFrameworkCore.Sqlite]]");
+                var method = extClassType.GetMethod("UseSqlite", new Type[] { typeof(DbContextOptionsBuilder<DbContext>), typeof(string), thirdParam });
+                if (method is null)
+                    throw new NotSupportedException("Couldn't find method UseSqlite in class Microsoft.EntityFrameworkCore.SqliteDbContextOptionsBuilderExtensions"
+                        + " of assembly Microsoft.EntityFrameworkCore.Sqlite");
+
+                var args = new object[] { optionsBuilder, connectionString, null! };
+                method.Invoke(null, args);
+                return new DbContext(optionsBuilder.Options);
+            }
+            else throw new NotSupportedException($"Provider {providerClientAssemblyNameOrDllPath} is not supported");
+
+        }
+        #endregion
+
 
     }
 }

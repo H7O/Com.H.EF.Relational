@@ -39,9 +39,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Com.H" Version="6.0.2.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.9" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Com.H">
+      <HintPath>..\..\Com.H\Net6\bin\Release\net6.0\Com.H.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
