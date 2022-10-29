@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Com.H.Data;
 using System.Reflection;
 using Com.H.Text;
+using Com.H.Text.Template;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace Com.H.EF.Relational
 {
@@ -1244,11 +1246,13 @@ namespace Com.H.EF.Relational
         /// Creates a DbContext for a given connection string. Support currently for SQL Server and SQLite
         /// </summary>
         /// <param name="connectionString"></param>
-        /// <param name="providerClientAssemblyNameOrDllPath"></param>
+        /// <param name="providerClientAssemblyNameOrDllPath">If not provided defaults to Microsoft.EntityFrameworkCore.SqlServer, 
+        /// then to Microsoft.EntityFrameworkCore.Sqlite if SqlServer is not found</param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="NotSupportedException"></exception>
-        public static DbContext CreateDbContext(this string connectionString, string? providerClientAssemblyNameOrDllPath = "Microsoft.EntityFrameworkCore.SqlServer")
+        public static DbContext CreateDbContext(this string connectionString, 
+            string? providerClientAssemblyNameOrDllPath = null)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new ArgumentNullException(nameof(connectionString));
@@ -1256,12 +1260,21 @@ namespace Com.H.EF.Relational
             var clientAssembly = string.IsNullOrWhiteSpace(providerClientAssemblyNameOrDllPath) 
                 ? "Microsoft.EntityFrameworkCore.SqlServer": providerClientAssemblyNameOrDllPath;
 
+            Assembly? assembly = null;
+            try
+            {
+                assembly = Com.H.Reflection.ReflectionExtensions.LoadAssembly(clientAssembly);
+            }
+            catch { }
             
-            var assembly = Com.H.Reflection.ReflectionExtensions.LoadAssembly(clientAssembly);
             if (assembly is null && string.IsNullOrWhiteSpace(providerClientAssemblyNameOrDllPath))
             {
                 clientAssembly = "Microsoft.EntityFrameworkCore.Sqlite";
-                assembly = Com.H.Reflection.ReflectionExtensions.LoadAssembly(clientAssembly);
+                try
+                {
+                    assembly = Com.H.Reflection.ReflectionExtensions.LoadAssembly(clientAssembly);
+                }
+                catch { }
             }
 
             if (assembly is null)
@@ -1314,6 +1327,62 @@ namespace Com.H.EF.Relational
             else throw new NotSupportedException($"Provider {providerClientAssemblyNameOrDllPath} is not supported");
 
         }
+        #endregion
+
+        #region creating default template data processor
+
+        // TODO: Consider moving it to Com.H.Text.Template.TemplateExtensions.cs
+        public static IEnumerable<dynamic>? GetDefaultDataProcessors(TemplateMultiDataRequest req)
+        {
+            // return null if no data is requested
+            if (req?.Request is null
+                || string.IsNullOrEmpty(req.ConnectionString))
+                return null;
+
+            #region DbContext
+            DbContext? dc = null;
+            if (req.ContentType.EqualsIgnoreCase("sql"))
+                dc = CreateDbContext(req.ConnectionString, "Microsoft.EntityFrameworkCore.SqlServer");
+            else if (req.ContentType.EqualsIgnoreCase("sql-lite") 
+                || req.ContentType.EqualsIgnoreCase("sql_lite")
+                || req.ContentType.EqualsIgnoreCase("sqllite")
+                )
+                dc = CreateDbContext(req.ConnectionString, "Microsoft.EntityFrameworkCore.Sqlite");
+
+            #endregion
+            if (dc is null) throw new NotSupportedException($"Content type {req.ContentType} is not supported in default data processors."
+                + " Visit https://github.com/H7O/Com.H.EF.Relational/blob/master/Net6/QueryExtensions.cs and check GetDefaultDataProcessors()"
+                + " to use as an example of how to create your own data processor");
+            if (req.PreRender) req.Request = req.Request.Fill(req.QueryParamsList);
+            return dc.ExecuteQuery(req.Request, req.QueryParamsList);
+        }
+
+        //public static IEnumerable<dynamic>? GetDefaultDataProcessors(TemplateDataRequest req)
+        //{
+        //    // return null if no data is requested
+        //    if (req?.Request is null
+        //        || string.IsNullOrEmpty(req.ConnectionString))
+        //        return null;
+
+        //    #region DbContext
+        //    DbContext? dc = null;
+        //    if (req.ContentType.EqualsIgnoreCase("sql"))
+        //        dc = CreateDbContext(req.ConnectionString, "Microsoft.EntityFrameworkCore.SqlServer");
+        //    else if (req.ContentType.EqualsIgnoreCase("sql-lite")
+        //        || req.ContentType.EqualsIgnoreCase("sql_lite")
+        //        || req.ContentType.EqualsIgnoreCase("sqllite")
+        //        )
+        //        dc = CreateDbContext(req.ConnectionString, "Microsoft.EntityFrameworkCore.Sqlite");
+
+        //    #endregion
+        //    if (dc is null) throw new NotSupportedException($"Content type {req.ContentType} is not supported in default data processors."
+        //        + " Visit https://github.com/H7O/Com.H.EF.Relational/blob/master/Net6/QueryExtensions.cs and check GetDefaultDataProcessors()"
+        //        + " to use as an example of how to create your own data processor");
+            
+        //    return dc.ExecuteQuery(req.Request, (object?) req.DataModel, req.OpenMarker!, req.CloseMarker!, req.NullReplacement!);
+        //}
+
+
         #endregion
 
 
