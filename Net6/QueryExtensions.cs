@@ -1334,6 +1334,9 @@ namespace Com.H.EF.Relational
         // TODO: Consider moving it to Com.H.Text.Template.TemplateExtensions.cs
         public static IEnumerable<dynamic>? GetDefaultDataProcessors(TemplateMultiDataRequest req)
         {
+            // todo: get ConnectionString, ContentType, and PreRender from attributes instead of properties within the request
+            // as it is now. Once done, remove the implementation of those properties from the request
+
             // return null if no data is requested
             if (req?.Request is null
                 || string.IsNullOrEmpty(req.ConnectionString))
