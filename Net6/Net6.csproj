@@ -8,7 +8,7 @@
     <RootNamespace>Com.H.EF.Relational</RootNamespace>
     <ApplicationIcon>128x128.ico</ApplicationIcon>
     <GenerateDocumentationFile>False</GenerateDocumentationFile>
-    <Version>6.0.0.5</Version>
+    <Version>6.0.0.6</Version>
     <Authors>Hussein Al Bayati</Authors>
     <Description>Dynamically query relational databases without the need for pre-defined data models to retrieve results nor pre-defined parameters to pass to queries</Description>
     <Copyright>Hussein Al Bayati</Copyright>
@@ -39,8 +39,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Com.H" Version="6.0.2.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.10" />
+    <PackageReference Include="Com.H" Version="6.0.2.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.0" />
   </ItemGroup>
 
 </Project>
