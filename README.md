@@ -1,8 +1,9 @@
 # Com.H.EF.Relational
-Dynamically query relational databases without the need for pre-defined data models to retrieve results nor pre-defined parameters to pass to queries.
+Dynamically query relational databases without the need for pre-defined data models to retrieve results, and with flexible and safe means for passing parameters to queries.
 
 ## Sample 1
 This sample demonstrates how to execute a simple query without parameters on a SQL Server Database.
+
 To run this sample, you need to:
 1) Create a new console application
 2) Add NuGet package Com.H.EF.Relational
@@ -36,17 +37,18 @@ using Microsoft.EntityFrameworkCore;
 
 string conStr = "connection string goes here";
 DbContext dc = conStr.CreateDbContext();
+var queryParams = new { name = "abc" };
 
 var result = dc.ExecuteQuery(@"
 	select * from (values ('abc', '123'), ('def', '456')) as t (name, phone)
-	where name = {{name}}", new { name = "abc" }
-	"
+	where name = {{name}}", queryParams
 );
 
-// ^ you can pass normal, anonymous object (similar to the example above), 
-// or IDictionary<string, object> as parameters
-// Example 1: new Dictionary<string, object> { { "name", "abc" } }
-// Example 2: new CustomParamClass { name = "abc" }
+// ^ queryParams could be an anonymous object (similar to the example above)
+// a normal object, or IDictionary<string, object>
+// Example 1: var queryParams = new Dictionary<string, object> { { "name", "abc" } }
+// Example 2: var queryParams = new CustomParamClass { name = "abc" }
+
 
 foreach(var item in result)
 {
@@ -64,9 +66,9 @@ or Microsoft.EntityFrameworkCore.SqlLite packages in your project and creates a 
 accordingly for whichever package (SqlServer or SqlLite) it finds.
 
 If it detects both packages are added in your project, it'll create a DbContext for SQL Server.
-To override this behavior, i.e. create a DbContext for SqlLite instead of SqlServer use `conStr.CreateDbContext("Microsoft.EntityFrameworkCore.SqlServer")` instead of conStr.CreateDbContext
+To override this behavior, i.e. create a DbContext for SqlLite instead of SqlServer use `conStr.CreateDbContext("Microsoft.EntityFrameworkCore.SqlLite")` instead of just `conStr.CreateDbContext()`
 
-If you have a different database other than SqlServer and SqlLite, use the following `conStr.CreateDbContext('your db package name or path to your db package dll file')`
+If you have a different database other than SqlServer or SqlLite, use the following `conStr.CreateDbContext('your db package name or path to your db package dll file')`
 
 ## What other features this library has?
-This small library has several other options that allows for more advanced features that might not be of much use to most, hence it's left out in this quick `how to` documentation (will hopefully be documented in the future).
+This small library has several other options that allow for more advanced features that might not be of much use to most, hence samples for those features have been left out in this quick `how to` documentation.
