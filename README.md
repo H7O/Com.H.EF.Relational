@@ -6,8 +6,8 @@ This sample demonstrates how to execute a simple query without parameters on a S
 
 To run this sample, you need to:
 1) Create a new console application
-2) Add NuGet package Com.H.EF.Relational
-3) Add NuGet package Microsoft.EntityFrameworkCore.SqlServer
+2) Add NuGet package [Com.H.EF.Relational](https://www.nuget.org/packages/Com.H.EF.Relational)  
+3) Add NuGet package [Microsoft.EntityFrameworkCore.SqlServer](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.SqlServer)
 4) copy and paste the following code into your Program.cs file:
 
 ```csharp
