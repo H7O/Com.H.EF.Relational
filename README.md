@@ -66,9 +66,13 @@ or Microsoft.EntityFrameworkCore.SqlLite packages in your project and creates a 
 accordingly for whichever package (SqlServer or SqlLite) it finds.
 
 If it detects both packages are added in your project, it'll create a DbContext for SQL Server.
-To override this behavior, i.e. create a DbContext for SqlLite instead of SqlServer use `conStr.CreateDbContext("Microsoft.EntityFrameworkCore.SqlLite")` instead of just `conStr.CreateDbContext()`
+To override this behavior, i.e. create a DbContext for SqlLite instead of SqlServer (in the event of both packages are present in your project) use `conStr.CreateDbContext("Microsoft.EntityFrameworkCore.SqlLite")` instead of just `conStr.CreateDbContext()`
 
-If you have a different database other than SqlServer or SqlLite, use the following `conStr.CreateDbContext('your db package name or path to your db package dll file')`
+If you have a different database other than SqlServer or SqlLite, just create a DbContext the normal way you would do usually (i.e. without the use of `CreateDbContext()`) and your DbContext object should have all the extension methods offered by Com.H.EF.Relational package available to it.
+
+> Note
+> `CreateDbContext()` is written just to simplify the DbContext creation part, it's not essential by any means.
+> Adding support in `CreateDbContext()` for other than SqlServer & SqlLite DbContext creation should be fairly straight forward (takes few minutes per database) and I will hopefully look into adding most common popular databases once I get the time to lookup their corresponding assemblies & extension method calls that generates their DbContext.
 
 ## What other features this library has?
 This small library has several other options that allow for more advanced features that might not be of much use to most, hence samples for those features have been left out in this quick `how to` documentation.
