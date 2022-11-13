@@ -40,6 +40,7 @@ DbContext dc = conStr.CreateDbContext();
 var result = dc.ExecuteQuery(@"
 	select * from (values ('abc', '123'), ('def', '456')) as t (name, phone)
 	where name = {{name}}", new { name = "abc" }
+	"
 );
 
 // ^ you can pass normal, anonymous object (similar to the example above), 
