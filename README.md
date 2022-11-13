@@ -70,7 +70,6 @@ To override this behavior, i.e. create a DbContext for SqlLite instead of SqlSer
 
 If you have a different database other than SqlServer or SqlLite, just create a DbContext the normal way you would do usually (i.e. without the use of `CreateDbContext()`) and your DbContext object should have all the extension methods offered by Com.H.EF.Relational package available to it.
 
-> Note
 > `CreateDbContext()` is written just to simplify the DbContext creation part, it's not essential by any means.
 > Adding support in `CreateDbContext()` for other than SqlServer & SqlLite DbContext creation should be fairly straight forward (takes few minutes per database) and I will hopefully look into adding most common popular databases once I get the time to lookup their corresponding assemblies & extension method calls that generates their DbContext.
 
