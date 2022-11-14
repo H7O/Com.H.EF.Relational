@@ -7,7 +7,7 @@
     <AssemblyName>Com.H.EF.Relational</AssemblyName>
     <RootNamespace>Com.H.EF.Relational</RootNamespace>
     <ApplicationIcon>128x128.ico</ApplicationIcon>
-    <Version>7.0.0.0</Version>
+    <Version>7.0.0.1</Version>
     <Authors>Hussein Al Bayati</Authors>
     <Description>Dynamically query relational databases without the need for pre-defined data models to retrieve results nor pre-defined parameters to pass to queries</Description>
     <Copyright>Hussein Al Bayati</Copyright>

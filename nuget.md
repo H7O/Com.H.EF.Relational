@@ -1,8 +1,5 @@
 # Com.H.EF.Relational
 Adds native raw SQL query execution support to EntityFrameworkCore.
-No need for DbSet nor heavy middle layers (like Dapper) with pre-defined data models. It just works at full native EntityFrameworkCore performance with the added flexibility of executing raw SQL queries & commands.
-
-Kindly visit the project's github page for full documentation [https://github.com/H7O/Com.H.EF.Relational](https://github.com/H7O/Com.H.EF.Relational)
 
 ## Sample 1
 This sample demonstrates how to execute a simple query without parameters on a SQL Server Database.
@@ -79,3 +76,7 @@ If you have a different database other than SqlServer or SqlLite, just create a 
 
 ## What other features this library has?
 This small library has several other options that allow for more advanced features that might not be of much use to most, hence samples for those features have been left out in this quick `how to` documentation.
+
+## Open source
+This package is written in C# and is fully open source. 
+Kindly visit the project's github page [https://github.com/H7O/Com.H.EF.Relational](https://github.com/H7O/Com.H.EF.Relational)
