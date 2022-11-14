@@ -1,5 +1,7 @@
 # Com.H.EF.Relational
-Dynamically query relational databases without the need for pre-defined data models to retrieve results, and with flexible and safe means for passing parameters to queries.
+Adds native raw SQL query execution support to EntityFrameworkCore.
+
+No need for DbSet nor heavy middle layers (like Dapper) with pre-defined data models. It just works at full native EntityFrameworkCore performance with the added flexibility of executing raw SQL queries & commands.
 
 ## Sample 1
 This sample demonstrates how to execute a simple query without parameters on a SQL Server Database.
@@ -21,6 +23,7 @@ var result = dc.ExecuteQuery("select 'abc' as name, '123' as phone");
 // ^ returns IEnumerable<dynamic>, you can also return IEnumerable<T> where T is your data model class
 // by using the ExecuteQuery<T> method which returns IEnumerable<T>
 // example: var result = dc.ExecuteQuery<YourDataModelClass>("select 'abc' as name, '123' as phone");
+// Also, returns IAsyncEnumerable when called asynchronously via dc.ExecuteQueryAsync()
 
 foreach(var item in result)
 {
