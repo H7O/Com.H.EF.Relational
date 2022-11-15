@@ -1,7 +1,5 @@
 # Com.H.EF.Relational
-Adds native raw SQL query execution support to EntityFrameworkCore.
-
-No need for DbSet nor heavy middle layers (like Dapper) with pre-defined data models. It just works at full native EntityFrameworkCore performance with the added flexibility of executing raw SQL queries & commands.
+Adds native raw SQL support to EntityFrameworkCore without the need for DbSet.
 
 ## Sample 1
 This sample demonstrates how to execute a simple query without parameters on a SQL Server Database.

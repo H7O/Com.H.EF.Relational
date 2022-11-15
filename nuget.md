@@ -1,5 +1,5 @@
 # Com.H.EF.Relational
-Adds native raw SQL query execution support to EntityFrameworkCore.
+Adds native raw SQL support to EntityFrameworkCore without the need for DbSet.
 
 ## Sample 1
 This sample demonstrates how to execute a simple query without parameters on a SQL Server Database.
