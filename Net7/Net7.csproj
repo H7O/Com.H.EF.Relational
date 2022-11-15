@@ -9,7 +9,7 @@
     <ApplicationIcon>128x128.ico</ApplicationIcon>
     <Version>7.0.0.1</Version>
     <Authors>Hussein Al Bayati</Authors>
-    <Description>Dynamically query relational databases without the need for pre-defined data models to retrieve results nor pre-defined parameters to pass to queries</Description>
+    <Description>Adds native raw SQL support to EntityFrameworkCore without the need for DbSet.</Description>
     <Copyright>Hussein Al Bayati</Copyright>
     <PackageProjectUrl>https://github.com/H7O/Com.H.EF.Relational</PackageProjectUrl>
     <PackageIcon>128x128.jpg</PackageIcon>
