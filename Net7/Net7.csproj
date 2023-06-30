@@ -7,7 +7,7 @@
     <AssemblyName>Com.H.EF.Relational</AssemblyName>
     <RootNamespace>Com.H.EF.Relational</RootNamespace>
     <ApplicationIcon>128x128.ico</ApplicationIcon>
-    <Version>7.0.0.2</Version>
+    <Version>7.0.0.3</Version>
     <Authors>Hussein Al Bayati</Authors>
     <Description>Adds native raw SQL support to EntityFrameworkCore without the need for DbSet.</Description>
     <Copyright>Hussein Al Bayati</Copyright>
@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Com.H" Version="7.0.0.1" />
+    <PackageReference Include="Com.H" Version="7.0.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.8" />
   </ItemGroup>
 
