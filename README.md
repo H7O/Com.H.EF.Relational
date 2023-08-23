@@ -1,36 +1,31 @@
-# Com.H.Data.Common
-Adds ExecuteQuery and ExecuteQueryAsync extension methods to DbConntion and DbCommand that returns dynamic data results `IEnumerable<dynamic>` and `IAsyncEnumerable<dynamic>`.
-
-## Installation
-Best way to install this library is via NuGet package manager. Search for [Com.H.Data.Common](https://www.nuget.org/packages/Com.H.Data.Common) and install it.
+# Com.H.EF.Relational
+Adds native raw SQL support to EntityFrameworkCore without the need for DbSet.
 
 ## Sample 1
 This sample demonstrates how to execute a simple query without parameters on a SQL Server Database.
 
 To run this sample, you need to:
 1) Create a new console application
-2) Add NuGet package [Com.H.Data.Common](https://www.nuget.org/packages/Com.H.Data.Common)  
-3) Add NuGet package [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
-4) Copy and paste the following code into your Program.cs file:
+2) Add NuGet package [Com.H.EF.Relational](https://www.nuget.org/packages/Com.H.EF.Relational)  
+3) Add NuGet package [Microsoft.EntityFrameworkCore.SqlServer](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.SqlServer)
+4) copy and paste the following code into your Program.cs file:
 
 ```csharp
-using Com.H.Data.Common;
-using System.Data.Common;
-using Microsoft.Data.SqlClient;
+using Com.H.EF.Relational;
+using Microsoft.EntityFrameworkCore;
 
-string conStr = @"connection string goes here";
-DbConnection dc = new SqlConnection(conStr);
-// ^ note the use of DbConnection instead of SqlConnection. The extension methods are defined on DbConnection
+string conStr = "connection string goes here";
+DbContext dc = conStr.CreateDbContext();
 
 var result = dc.ExecuteQuery("select 'abc' as name, '123' as phone");
 // ^ returns IEnumerable<dynamic>, you can also return IEnumerable<T> where T is your data model class
 // by using the ExecuteQuery<T> method which returns IEnumerable<T>
 // example: var result = dc.ExecuteQuery<YourDataModelClass>("select 'abc' as name, '123' as phone");
-// Also, returns IAsyncEnumerable when called asynchronously via dc.ExecuteQueryAsync() or dc.ExecuteQueryAsync<T>()
+// Also, returns IAsyncEnumerable when called asynchronously via dc.ExecuteQueryAsync()
 
-foreach (var item in result)
+foreach(var item in result)
 {
-    System.Console.WriteLine($"name = {item.name}, phone = {item.phone}");
+	System.Console.WriteLine($"name = {item.name}, phone = {item.phone}");
 }
 ```
 
@@ -38,50 +33,46 @@ foreach (var item in result)
 This sample demonstrates how to pass parameters to your SQL query
 
 ```csharp
-using Com.H.Data.Common;
-using System.Data.Common;
-using Microsoft.Data.SqlClient;
+using Com.H.EF.Relational;
+using Microsoft.EntityFrameworkCore;
 
-string conStr = @"your connection string goes here";
-DbConnection dc = new SqlConnection(conStr);
-// ^ note the use of DbConnection instead of SqlConnection. The extension methods are defined on DbConnection
-
-var queryParams = new { name = "Jane" };
-// ^ queryParams could be an anonymous object (similar to the example above)
-// a normal object, or IDictionary<string, object>
-// Example 1: var queryParams = new Dictionary<string, object> { { "name", "Jane" } }
-// Example 2: var queryParams = new MyCustomParamClass { name = "John" }
-
+string conStr = "connection string goes here";
+DbContext dc = conStr.CreateDbContext();
+var queryParams = new { name = "abc" };
 
 var result = dc.ExecuteQuery(@"
-	select * from (values ('John', '55555'), ('Jane', '44444')) as t (name, phone)
+	select * from (values ('abc', '123'), ('def', '456')) as t (name, phone)
 	where name = {{name}}", queryParams
 );
-// ^ note the use of curly braces around the parameter name in the query. 
-// This is a special syntax that allows you to pass parameters to your query.
-// The parameter name must match the property name in the queryParams object.
-// It also protects you from SQL injection attacks and is configurable to use other delimiters by passing 
-// a regular expression 
- 
 
-// Example 1: using `[[` and `]]` instead of `{{` and `}}` dc.ExecuteQuery(@"
-//	select * from (values ('John', '55555'), ('Jane', '44444')) as t (name, phone)
-//	where name = [[name]]", queryParams, @"\[\[(?<param>.*?)?\]\]" );
-
-// Example 2: using `|` for enclosing parameters instead of `{{` and `}}` dc.ExecuteQuery(@"
-//	select * from (values ('John', '55555'), ('Jane', '44444')) as t (name, phone)
-//	where name = |name|", queryParams, @"\|(?<param>.*?)\|" );
+// ^ queryParams could be an anonymous object (similar to the example above)
+// a normal object, or IDictionary<string, object>
+// Example 1: var queryParams = new Dictionary<string, object> { { "name", "abc" } }
+// Example 2: var queryParams = new CustomParamClass { name = "abc" }
 
 
-
-foreach (var item in result)
+foreach(var item in result)
 {
-    System.Console.WriteLine($"name = {item.name}, phone = {item.phone}");
+	System.Console.WriteLine($"name = {item.name}, phone = {item.phone}");
 }
 ```
 
 ## What other databases this library supports?
-Any ADO.NET provider that implements DbConnection and DbCommand classes should work with this library.
+Any EntityFrameworkCore database, just add your target database NuGet package, create a DbContext and use
+the extension methods offered by Com.H.EF.Relational to execute any SQL queries you want.
+
+## How does conStr.CreateDbContext() method in the samples above work?
+CreateDbContext() does a lookup for either Microsoft.EntityFrameworkCore.SqlServer 
+or Microsoft.EntityFrameworkCore.SqlLite packages in your project and creates a DbContext object
+accordingly for whichever package (SqlServer or SqlLite) it finds.
+
+If it detects both packages are added in your project, it'll create a DbContext for SQL Server.
+To override this behavior, i.e. create a DbContext for SqlLite instead of SqlServer (in the event of both packages are present in your project) use `conStr.CreateDbContext("Microsoft.EntityFrameworkCore.SqlLite")` instead of just `conStr.CreateDbContext()`
+
+If you have a different database other than SqlServer or SqlLite, just create a DbContext the normal way you would do usually (i.e. without the use of `CreateDbContext()`) and your DbContext object should have all the extension methods offered by Com.H.EF.Relational package available to it.
+
+> `CreateDbContext()` is written just to simplify the DbContext creation part, it's not essential by any means.
+> Adding support in `CreateDbContext()` for other than SqlServer & SqlLite DbContext creation should be fairly straight forward (takes few minutes per database) and I will hopefully look into adding most common popular databases once I get the time to lookup their corresponding assemblies & extension method calls that generates their DbContext.
 
 ## What other features this library has?
 This small library has several other options that allow for more advanced features that might not be of much use to most, hence samples for those features have been left out in this quick `how to` documentation.
