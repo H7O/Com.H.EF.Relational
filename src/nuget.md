@@ -3,17 +3,14 @@ Adds `ExecuteQuery`, `ExecuteQueryAsync`, `ExecuteCommand`, and `ExecuteCommandA
 
 This is a thin wrapper around [Com.H.Data.Common](https://www.nuget.org/packages/Com.H.Data.Common) that brings all of its features to Entity Framework Core users by operating on `DbContext` instead of `DbConnection`.
 
+For source code and documentation, kindly visit the project's github page [https://github.com/H7O/Com.H.EF.Relational](https://github.com/H7O/Com.H.EF.Relational)
+
 ## Why this package?
 Entity Framework Core requires a registered `DbSet<T>` entity to use `FromSqlRaw`/`FromSqlInterpolated`, and its newer `SqlQueryRaw<T>` (EF Core 8+) still requires a concrete type — there's no built-in way to run arbitrary SQL and get back `IEnumerable<dynamic>` results.
 
 This means if you just want to run a quick ad-hoc query without defining a model class or registering a `DbSet`, EF Core doesn't offer a straightforward path.
 
 This package fills that gap. It lets you execute any SQL directly on your `DbContext` and get back dynamic (or strongly-typed) results — no `DbSet`, no pre-defined model required. Since the library executes arbitrary SQL, you can run anything your database supports: stored procedures, CTEs, window functions, user-defined functions, temp tables, dynamic SQL, and more. It also brings flexible parameterization (including JSON/`JsonElement` parameters), automatic nested JSON/XML parsing, and proper resource management via disposable result types.
-
-## Installation
-```
-dotnet add package Com.H.EF.Relational
-```
 
 ## Sample 1
 This sample demonstrates how to execute a simple query without parameters on a SQL Server Database.
@@ -117,11 +114,6 @@ For XML, use `{type{xml{your_property_name}}}`.
 
 ## What databases does this library support?
 Any database supported by Entity Framework Core. Since this library works through EF Core's underlying `DbConnection`, it inherits the same broad database support as [Com.H.Data.Common](https://www.nuget.org/packages/Com.H.Data.Common), including SQL Server, PostgreSQL, MySQL, SQLite, Oracle, and more.
-
-## How does it work under the hood?
-This package is a thin wrapper. Each extension method simply calls `dbContext.Database.GetDbConnection()` to obtain the underlying `DbConnection`, then delegates to the corresponding [Com.H.Data.Common](https://www.nuget.org/packages/Com.H.Data.Common) extension method.
-
-All the heavy lifting — parameterized queries, dynamic result mapping, typed result mapping, JSON/XML parsing, resource management — is handled by Com.H.Data.Common.
 
 ## Open source
 This package is written in C# and is fully open source. 

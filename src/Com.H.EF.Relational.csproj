@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Com.H.EF.Relational</AssemblyName>
+    <RootNamespace>Com.H.EF.Relational</RootNamespace>
+    <Version>10.0.0</Version>
+    <Authors>Hussein Al Bayati</Authors>
+    <Description>Adds ExecuteQuery, ExecuteQueryAsync, ExecuteCommand, and ExecuteCommandAsync extension methods to EF Core's DbContext. A thin wrapper around Com.H.Data.Common that brings the same features to Entity Framework users.</Description>
+    <Copyright>Hussein Al Bayati</Copyright>
+    <PackageProjectUrl>https://github.com/H7O/Com.H.EF.Relational</PackageProjectUrl>
+    <PackageIcon>128x128.jpg</PackageIcon>
+    <PackageReadmeFile>nuget.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/H7O/Com.H.EF.Relational</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Entity Framework, EF Core, DbContext, dynamic queries, raw SQL</PackageTags>
+    <PackageReleaseNotes>Complete rewrite as a thin wrapper around Com.H.Data.Common. Now supports net8.0, net9.0, and net10.0.</PackageReleaseNotes>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Deterministic builds for reproducibility -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Source Link - enables stepping into source code when debugging -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+    <!-- Embed debug symbols in the assembly (avoids separate .snupkg) -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <!-- Source Link for GitHub -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.103" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Com.H.Data.Common" Version="[10.0.0, 11.0.0)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\128x128.jpg">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+
+    <None Include=".\nuget.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
