@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Com.H.EF.Relational</AssemblyName>
     <RootNamespace>Com.H.EF.Relational</RootNamespace>
-    <Version>10.0.0.1</Version>
+    <Version>10.0.0.2</Version>
     <Authors>Hussein Al Bayati</Authors>
     <Description>Adds ExecuteQuery, ExecuteQueryAsync, ExecuteCommand, and ExecuteCommandAsync extension methods to EF Core's DbContext. A thin wrapper around Com.H.Data.Common that brings the same features to Entity Framework users.</Description>
     <Copyright>Hussein Al Bayati</Copyright>
