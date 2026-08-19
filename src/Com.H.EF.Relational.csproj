@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Com.H.EF.Relational</AssemblyName>
     <RootNamespace>Com.H.EF.Relational</RootNamespace>
-    <Version>10.0.0.2</Version>
+    <Version>10.0.0.3</Version>
     <Authors>Hussein Al Bayati</Authors>
     <Description>Adds ExecuteQuery, ExecuteQueryAsync, ExecuteCommand, and ExecuteCommandAsync extension methods to EF Core's DbContext. A thin wrapper around Com.H.Data.Common that brings the same features to Entity Framework users.</Description>
     <Copyright>Hussein Al Bayati</Copyright>
@@ -35,14 +35,14 @@
 
   <!-- Source Link for GitHub -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.201" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Com.H.Data.Common" Version="[10.1.0.4, 11.0.0)" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.25" Condition="'$(TargetFramework)' == 'net8.0'" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.14" Condition="'$(TargetFramework)' == 'net9.0'" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.5" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageReference Include="Com.H.Data.Common" Version="[10.1.0.9, 11.0.0)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.30" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.19" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" Condition="'$(TargetFramework)' == 'net10.0'" />
   </ItemGroup>
 
   <ItemGroup>
