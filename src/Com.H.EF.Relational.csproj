@@ -40,9 +40,13 @@
 
   <ItemGroup>
     <PackageReference Include="Com.H.Data.Common" Version="[10.1.0.9, 11.0.0)" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.30" Condition="'$(TargetFramework)' == 'net8.0'" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.19" Condition="'$(TargetFramework)' == 'net9.0'" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <!-- EF Core floors are a support statement (oldest version supported), not a recommendation.
+         Set once per major and left alone; the only EF API used is Database.GetDbConnection().
+         net8.0 floors at 8.0.10 rather than 8.0.0 because EF 8.0.0-8.0.8 pull
+         Microsoft.Extensions.Caching.Memory 8.0.0 (GHSA-qj66-m88j-hmgj, high severity). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.10" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
   </ItemGroup>
 
   <ItemGroup>
