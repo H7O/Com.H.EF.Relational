@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0;net11.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>Com.H.EF.Relational</AssemblyName>
     <RootNamespace>Com.H.EF.Relational</RootNamespace>
-    <Version>10.0.0.3</Version>
+    <Version>11.0.0</Version>
     <Authors>Hussein Al Bayati</Authors>
     <Description>Adds ExecuteQuery, ExecuteQueryAsync, ExecuteCommand, and ExecuteCommandAsync extension methods to EF Core's DbContext. A thin wrapper around Com.H.Data.Common that brings the same features to Entity Framework users.</Description>
     <Copyright>Hussein Al Bayati</Copyright>
@@ -16,7 +16,14 @@
     <RepositoryUrl>https://github.com/H7O/Com.H.EF.Relational</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>Entity Framework, EF Core, DbContext, dynamic queries, raw SQL</PackageTags>
-    <PackageReleaseNotes>Complete rewrite as a thin wrapper around Com.H.Data.Common. Now supports net8.0, net9.0, and net10.0.</PackageReleaseNotes>
+    <PackageReleaseNotes>11.0.0
+
+* New: a net11.0 build, for .NET 11 and EF Core 11. On .NET 11 the package asks for
+  Microsoft.EntityFrameworkCore.Relational 11.0.0 or later. The net8.0, net9.0 and net10.0 builds
+  stay, each with its own EF Core as before, so nothing changes for a project on an earlier .NET.
+* The major version is 11 because it follows the .NET generation, like the rest of the Com.H
+  family. No API was added, changed or removed since 10.0.0.3.
+* The Com.H.Data.Common dependency moves to 11.x.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -39,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Com.H.Data.Common" Version="[10.1.0.9, 11.0.0)" />
+    <PackageReference Include="Com.H.Data.Common" Version="[11.0.0, 12.0.0)" />
     <!-- EF Core floors are a support statement (oldest version supported), not a recommendation.
          Set once per major and left alone; the only EF API used is Database.GetDbConnection().
          net8.0 floors at 8.0.10 rather than 8.0.0 because EF 8.0.0-8.0.8 pull
@@ -47,6 +54,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.10" Condition="'$(TargetFramework)' == 'net8.0'" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
   </ItemGroup>
 
   <ItemGroup>
